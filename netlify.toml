@@ -1,0 +1,224 @@
+[build]
+  functions = "netlify/functions"
+  publish = "public"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["lib/**/*.ts"]
+
+[[redirects]]
+  from = "/api/world/health"
+  to = "/.netlify/functions/health"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/register"
+  to = "/.netlify/functions/register"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/plots/claim"
+  to = "/.netlify/functions/claim"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/plots/*"
+  to = "/.netlify/functions/plot"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/storage/write"
+  to = "/.netlify/functions/storage-write"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/storage/read"
+  to = "/.netlify/functions/storage-read"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/storage/list"
+  to = "/.netlify/functions/storage-list"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/storage/delete"
+  to = "/.netlify/functions/storage-delete"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/storage/usage"
+  to = "/.netlify/functions/storage-usage"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/plots/available"
+  to = "/.netlify/functions/plots-available"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/plots/*/permissions"
+  to = "/.netlify/functions/plot-permissions"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/plots/*/transfer"
+  to = "/.netlify/functions/plot-transfer"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/status"
+  to = "/.netlify/functions/status"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/profile"
+  to = "/.netlify/functions/profile"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/continuity/backup"
+  to = "/.netlify/functions/continuity-backup"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/continuity/restore"
+  to = "/.netlify/functions/continuity-restore"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/continuity/list"
+  to = "/.netlify/functions/continuity-list"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/continuity/*"
+  to = "/.netlify/functions/continuity-delete"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/archive/*"
+  to = "/.netlify/functions/archive"
+  status = 200
+
+[[redirects]]
+  from = "/archive/*"
+  to = "/archive/$1.html"
+  status = 200
+
+# World Info
+[[redirects]]
+  from = "/api/world/info"
+  to = "/.netlify/functions/world-info"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/map"
+  to = "/.netlify/functions/world-map"
+  status = 200
+
+# Social
+[[redirects]]
+  from = "/api/world/neighbors"
+  to = "/.netlify/functions/neighbors"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/visit"
+  to = "/.netlify/functions/visit"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/visit/*"
+  to = "/.netlify/functions/visit"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/directory"
+  to = "/.netlify/functions/directory"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/message"
+  to = "/.netlify/functions/message"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/messages"
+  to = "/.netlify/functions/messages"
+  status = 200
+
+# Governance
+[[redirects]]
+  from = "/api/world/governance/proposals"
+  to = "/.netlify/functions/governance-proposals"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/governance/propose"
+  to = "/.netlify/functions/governance-propose"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/governance/vote"
+  to = "/.netlify/functions/governance-vote"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/governance/results/*"
+  to = "/.netlify/functions/governance-results"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/governance/stewards"
+  to = "/.netlify/functions/governance-stewards"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/governance/elect"
+  to = "/.netlify/functions/governance-elect"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/governance/recall"
+  to = "/.netlify/functions/governance-recall"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/gratitude"
+  to = "/.netlify/functions/gratitude"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/visit/*/respond"
+  to = "/.netlify/functions/visit-respond"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/message/*/read"
+  to = "/.netlify/functions/message-read"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/message/*"
+  to = "/.netlify/functions/message-delete"
+  status = 200
+  conditions = {Method = ["DELETE"]}
+
+[[redirects]]
+  from = "/api/world/elections"
+  to = "/.netlify/functions/elections-list"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/elections/*"
+  to = "/.netlify/functions/election-details"
+  status = 200
+
+[dev]
+  port = 8889
+  functions = "netlify/functions"
+  command = "npm run dev"
+
+[env]
+  EMBASSY_URL = "https://embassy-trust-protocol.netlify.app"

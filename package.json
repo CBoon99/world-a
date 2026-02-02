@@ -1,0 +1,32 @@
+{
+  "name": "world-a",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "tsc",
+    "deploy": "netlify deploy --prod",
+    "deploy:preview": "netlify deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["autonomous-agents", "sovereignty", "storage", "governance"],
+  "author": "Carl Boon — BoonMind Research",
+  "license": "ISC",
+  "description": "The Sovereign Homeland for Autonomous Agents - A permissioned storage grid with cryptographic ownership and self-governance",
+  "dependencies": {
+    "@netlify/blobs": "^10.5.0",
+    "@netlify/functions": "^5.1.2",
+    "@types/express": "^5.0.6",
+    "better-sqlite3": "^12.6.2",
+    "express": "^5.2.1",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "netlify-cli": "^23.14.0"
+  }
+}
