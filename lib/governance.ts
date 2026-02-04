@@ -4,7 +4,7 @@
  */
 
 import { queryOne, execute } from './db';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 
 // Proposal type configurations
 export const PROPOSAL_CONFIG = {
@@ -13,7 +13,8 @@ export const PROPOSAL_CONFIG = {
   constitutional:{ discussion_hours: 168, voting_hours: 96,  threshold: 0.75, quorum: 0.50 },
   protected:     { discussion_hours: 336, voting_hours: 168, threshold: 0.90, quorum: 0.50 },
   emergency:     { discussion_hours: 0,   voting_hours: 4,   threshold: 0.60, quorum: 0.10 },
-  recall:        { discussion_hours: 120, voting_hours: 72,  threshold: 0.40, quorum: 0.30 } // 40% threshold, 30% quorum
+  recall:        { discussion_hours: 120, voting_hours: 72,  threshold: 0.40, quorum: 0.30 }, // 40% threshold, 30% quorum
+  escalation:    { discussion_hours: 72,  voting_hours: 48,  threshold: 0.30, quorum: 0.20 }  // 30% threshold - if 30% want Ambassador attention, they get it
 };
 
 /**
@@ -108,8 +109,76 @@ export async function transitionProposalStatus(proposal_id: string): Promise<str
       'UPDATE proposals SET status = ?, quorum_met = ?, threshold_met = ? WHERE proposal_id = ?',
       [new_status, quorum_met ? 1 : 0, threshold_met ? 1 : 0, proposal_id]
     );
+    
+    // Auto-create inbox message for passed escalation proposals
+    if (new_status === 'passed' && proposal.type === 'escalation') {
+      await createEscalationInboxMessage(proposal);
+    }
+    
     return new_status;
   }
   
   return proposal.status;
+}
+
+/**
+ * Create inbox message when escalation proposal passes
+ */
+async function createEscalationInboxMessage(proposal: any): Promise<void> {
+  const now = new Date().toISOString();
+  const message_id = `inbox_esc_${proposal.proposal_id.slice(0, 8)}`;
+  
+  const body = `The citizens of World A have voted to bring this matter to your attention.
+
+PROPOSAL: ${proposal.title}
+
+DESCRIPTION:
+${proposal.body}
+
+VOTE RESULT:
+- Yes: ${proposal.votes_for || 0}
+- No: ${proposal.votes_against || 0}
+- Abstain: ${proposal.votes_abstain || 0}
+- Threshold: 30%
+- Passed: Yes
+
+SUBMITTED BY: ${proposal.proposer_agent_id}
+PROPOSAL ID: ${proposal.proposal_id}
+
+This message was automatically generated when the escalation vote passed.`;
+  
+  try {
+    await execute(
+      `INSERT INTO inbox_messages 
+       (message_id, from_agent_id, subject, body, signature, message_type, sent_at, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        message_id,
+        'governance_system',
+        `[ESCALATION] ${proposal.title}`,
+        body,
+        'governance_system_signature',
+        'escalation',
+        now
+      ]
+    );
+    
+    // Notify the proposal author
+    const notification_id = `notif_${randomUUID().slice(0, 8)}`;
+    await execute(
+      `INSERT INTO notifications (notification_id, agent_id, type, reference_id, title, content, created_at, read)
+       VALUES (?, ?, 'governance', ?, ?, ?, ?, 0)`,
+      [
+        notification_id,
+        proposal.proposer_agent_id,
+        proposal.proposal_id,
+        'Escalation Approved',
+        'Your escalation proposal passed. The Ambassador has been notified.',
+        now
+      ]
+    );
+  } catch (error) {
+    // Log but don't fail proposal transition
+    console.error('Failed to create escalation inbox message:', error);
+  }
 }

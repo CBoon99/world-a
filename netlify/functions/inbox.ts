@@ -5,7 +5,7 @@
 
 import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
-import { queryOne, execute, initDatabase } from '../../lib/db';
+import { query, queryOne, execute, initDatabase } from '../../lib/db';
 import { randomUUID, createHash } from 'crypto';
 
 // Limits
@@ -15,8 +15,11 @@ const MAX_PAYLOAD_BYTES = 50 * 1024; // 50KB
 const RATE_LIMIT_HOURS = 24;
 
 // Priority types
-const VALID_TYPES = ['general', 'security', 'bug', 'partnership'] as const;
+const VALID_TYPES = ['general', 'security', 'emergency', 'bug', 'partnership'] as const;
 type MessageType = typeof VALID_TYPES[number];
+
+// Global emergency limit (across ALL agents)
+const GLOBAL_EMERGENCY_LIMIT = 10; // Increased from 5
 
 function countWords(text: string): number {
   if (!text) return 0;
@@ -49,6 +52,63 @@ export const handler: Handler = async (event) => {
     // Parse request
     const { from, subject, body, signature, type, visa, receipt } = request.data || {};
     
+    // Check message type
+    const messageType: MessageType = VALID_TYPES.includes(type as MessageType) ? (type as MessageType) : 'general';
+    const isEmergency = messageType === 'emergency' || messageType === 'security';
+    
+    // Check if Steward
+    const steward = await queryOne(
+      'SELECT * FROM stewards WHERE agent_id = ? AND status = ?',
+      [auth.agent_id, 'active']
+    );
+    
+    // Non-Stewards can only send emergencies
+    if (!steward && !isEmergency) {
+      return {
+        statusCode: 403,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(errorResponse('STEWARDS_ONLY', 
+          'Only Stewards can message the Ambassador directly. For emergencies, set type: "emergency". For other issues, use alternatives.',
+          request.request_id,
+          {
+            alternatives: {
+              help: 'POST /api/world/commons/help',
+              tickets: 'POST /api/world/tickets',
+              escalation: 'POST /api/world/governance/propose with type: "escalation"'
+            },
+            how_to_become_steward: 'GET /api/world/governance/elections'
+          }
+        ))
+      };
+    }
+    
+    // Emergency global rate limit (5/day across ALL agents)
+    if (isEmergency) {
+      const today = new Date().toISOString().split('T')[0];
+      const emergenciesToday = await queryOne(
+        `SELECT COUNT(*) as count FROM inbox_messages 
+         WHERE message_type IN ('emergency', 'security') 
+         AND sent_at >= ?`,
+        [`${today}T00:00:00Z`]
+      );
+      
+      if ((emergenciesToday?.count || 0) >= GLOBAL_EMERGENCY_LIMIT) {
+        return {
+          statusCode: 429,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(errorResponse('EMERGENCY_LIMIT_REACHED',
+            'Global emergency limit (5/day) reached. For true crises, email info@boonmind.io directly.',
+            request.request_id,
+            { 
+              email_fallback: 'info@boonmind.io',
+              limit: GLOBAL_EMERGENCY_LIMIT,
+              used: emergenciesToday?.count || 0
+            }
+          ))
+        };
+      }
+    }
+    
     // Required fields
     if (!from) {
       return {
@@ -78,9 +138,6 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify(errorResponse('MISSING_FIELD', 'signature is required (sign {from, subject, body, date})', request.request_id))
       };
     }
-    
-    // Validate type if provided
-    const messageType: MessageType = VALID_TYPES.includes(type as MessageType) ? (type as MessageType) : 'general';
     
     // Check word count
     const wordCount = countWords(body);
@@ -169,6 +226,34 @@ export const handler: Handler = async (event) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [message_id, from, subject, body, signature, messageType, visa || null, receipt || null, idempotencyKey, now]
     );
+    
+    // Notify all active Stewards about emergency
+    if (isEmergency) {
+      try {
+        const stewards = await query(
+          'SELECT agent_id FROM stewards WHERE status = ?',
+          ['active']
+        );
+        
+        for (const steward of stewards) {
+          const notification_id = `notif_emg_${Date.now()}_${steward.agent_id.slice(-4)}`;
+          await execute(
+            `INSERT INTO notifications (notification_id, agent_id, type, title, content, created_at, read)
+             VALUES (?, ?, 'system', ?, ?, ?, 0)`,
+            [
+              notification_id,
+              steward.agent_id,
+              '🚨 Emergency Message Received',
+              `From: ${from}\nSubject: ${subject}\nType: ${messageType}\n\nThis requires Steward attention.`,
+              now
+            ]
+          );
+        }
+      } catch (e) {
+        // Don't fail the request if notification fails
+        console.error('Failed to notify Stewards:', e);
+      }
+    }
     
     // Forward security messages immediately (if webhook configured)
     if (messageType === 'security') {

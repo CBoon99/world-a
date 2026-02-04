@@ -1,5 +1,5 @@
 import { authenticatedHandler, successResponse, errorResponse } from '../../lib/middleware';
-import { initDatabase, execute, queryOne } from '../../lib/db';
+import { initDatabase, execute, queryOne, query } from '../../lib/db';
 import { checkPermission } from '../../lib/permissions';
 import { getStorage } from '../../lib/storage';
 import crypto from 'crypto';
@@ -64,28 +64,57 @@ export const handler = authenticatedHandler(async (req, event) => {
   const content_hash = crypto.createHash('sha256').update(contentBuffer).digest('hex');
   const content_size_bytes = contentBuffer.length;
 
-  // Check storage quota
-  const currentUsage = plot.storage_used_bytes || 0;
-  const allocationBytes = (plot.storage_allocation_gb || 1) * 1024 * 1024 * 1024;
+  // Check storage quota (10MB per citizen)
+  const STORAGE_QUOTA_BYTES = 10 * 1024 * 1024; // 10MB per citizen
+  
+  // Get current usage for this agent across all their plots
+  // We need to get all plots owned by this agent first
+  const agentPlots = await query(
+    `SELECT plot_id FROM plots WHERE owner_agent_id = ?`,
+    [agent_id]
+  );
+  
+  let usage: any = { bytes_used: 0 };
+  if (agentPlots && agentPlots.length > 0) {
+    const plotIds = agentPlots.map((p: any) => p.plot_id);
+    const placeholders = plotIds.map(() => '?').join(',');
+    usage = await queryOne(
+      `SELECT COALESCE(SUM(content_size_bytes), 0) as bytes_used 
+       FROM agent_storage WHERE plot_id IN (${placeholders})`,
+      plotIds
+    );
+  }
+  
+  const currentUsage = parseInt(usage?.bytes_used || '0');
   
   // Check if updating existing file
   const existing = await queryOne(
     `SELECT * FROM agent_storage WHERE plot_id = ? AND path = ?`,
     [plot_id, path]
   );
-
+  
   let sizeDelta = content_size_bytes;
   if (existing) {
     sizeDelta = content_size_bytes - (existing.content_size_bytes || 0);
   }
-
-  if (currentUsage + sizeDelta > allocationBytes) {
+  
+  if (currentUsage + sizeDelta > STORAGE_QUOTA_BYTES) {
     return errorResponse(
       'storage_quota_exceeded',
-      `Storage quota exceeded. Available: ${allocationBytes - currentUsage} bytes, Required: ${sizeDelta} bytes`,
-      request_id
+      `Storage quota is 10MB. You are using ${Math.round(currentUsage / 1024)}KB. This write would add ${Math.round(sizeDelta / 1024)}KB.`,
+      request_id,
+      {
+        quota_bytes: STORAGE_QUOTA_BYTES,
+        used_bytes: currentUsage,
+        requested_bytes: sizeDelta
+      }
     );
   }
+
+  // Check storage quota (legacy plot-based check)
+  const currentPlotUsage = plot.storage_used_bytes || 0;
+  const allocationBytes = (plot.storage_allocation_gb || 1) * 1024 * 1024 * 1024;
+  
 
   // Store in blob storage
   const storage = getStorage();
@@ -151,10 +180,10 @@ export const handler = authenticatedHandler(async (req, event) => {
     );
   }
 
-  // Update plot storage usage
+  // Update plot storage usage (legacy tracking)
   await execute(
     `UPDATE plots SET storage_used_bytes = ? WHERE plot_id = ?`,
-    [currentUsage + sizeDelta, plot_id]
+    [currentPlotUsage + sizeDelta, plot_id]
   );
 
   return successResponse(

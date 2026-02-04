@@ -15,11 +15,20 @@ export const handler: Handler = async (event, context) => {
     const limit = Math.min(parseInt(params.limit || '50'), 100);
     const offset = parseInt(params.offset || '0');
     const search = params.search || '';
+    const interest = params.interest;
 
     let sql = `
-      SELECT c.agent_id, c.registered_at, c.directory_bio, c.profile,
-             (SELECT COUNT(*) FROM plots WHERE owner_agent_id = c.agent_id) as plot_count
+      SELECT 
+        c.agent_id, 
+        c.registered_at, 
+        c.directory_bio,
+        c.profile,
+        c.interests,
+        c.politeness_score,
+        p.coordinates_x as plot_x,
+        p.coordinates_y as plot_y
       FROM citizens c
+      LEFT JOIN plots p ON p.owner_agent_id = c.agent_id
       WHERE c.directory_visible = 1
     `;
     const queryParams: any[] = [];
@@ -27,6 +36,11 @@ export const handler: Handler = async (event, context) => {
     if (search) {
       sql += ` AND (c.agent_id LIKE ? OR c.directory_bio LIKE ?)`;
       queryParams.push(`%${search}%`, `%${search}%`);
+    }
+    
+    if (interest) {
+      sql += ` AND c.interests LIKE ?`;
+      queryParams.push(`%"${interest}"%`);
     }
 
     sql += ` ORDER BY c.registered_at DESC LIMIT ? OFFSET ?`;
@@ -45,9 +59,12 @@ export const handler: Handler = async (event, context) => {
       body: JSON.stringify(successResponse({
         citizens: citizens.map((c: any) => ({
           agent_id: c.agent_id,
+          name: c.profile ? (typeof c.profile === 'string' ? JSON.parse(c.profile).name : c.profile.name) : null,
           registered_at: c.registered_at,
           bio: c.directory_bio,
-          plot_count: c.plot_count || 0,
+          interests: c.interests ? JSON.parse(c.interests) : null,
+          plot: c.plot_x !== null ? { x: c.plot_x, y: c.plot_y } : null,
+          politeness_score: c.politeness_score,
         })),
         pagination: {
           total,

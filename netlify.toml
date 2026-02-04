@@ -4,7 +4,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["lib/**/*.ts", "Safety/**", "Founding/**", "archive/**"]
+  included_files = ["lib/**/*.ts", "Safety/**", "Founding/**", "docs/**", "archive/**"]
 
 [[redirects]]
   from = "/api/world/health"
@@ -261,6 +261,120 @@
   to = "/.netlify/functions/safety-index"
   status = 200
   force = true
+
+# Documentation
+[[redirects]]
+  from = "/docs/agent-quickstart"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/ambassador-operations"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/api-reference"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/for-agents"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/for-humans"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/first-election"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+# Commons (single function handles GET and POST)
+[[redirects]]
+  from = "/api/world/commons/*"
+  to = "/.netlify/functions/commons/:splat"
+  status = 200
+
+# Bulletin (public)
+[[redirects]]
+  from = "/api/world/bulletin"
+  to = "/.netlify/functions/bulletin"
+  status = 200
+
+# Notifications
+[[redirects]]
+  from = "/api/world/notifications"
+  to = "/.netlify/functions/notifications"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/notifications/*/read"
+  to = "/.netlify/functions/notification-read"
+  status = 200
+
+# Tickets (public read, auth write)
+[[redirects]]
+  from = "/api/world/tickets"
+  to = "/.netlify/functions/tickets"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/tickets/*"
+  to = "/.netlify/functions/tickets/:splat"
+  status = 200
+
+# Ticket respond (Ambassador only)
+[[redirects]]
+  from = "/api/world/tickets/*/respond"
+  to = "/.netlify/functions/ticket-respond"
+  status = 200
+
+# Plot abandonment
+[[redirects]]
+  from = "/api/world/plots/abandon"
+  to = "/.netlify/functions/plot-abandon"
+  status = 200
+
+# Admin endpoints
+[[redirects]]
+  from = "/api/admin/login"
+  to = "/.netlify/functions/admin-login"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/login/verify"
+  to = "/.netlify/functions/admin-login"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/dashboard"
+  to = "/.netlify/functions/admin-dashboard"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/inbox"
+  to = "/.netlify/functions/admin-inbox"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/announce"
+  to = "/.netlify/functions/admin-announce"
+  status = 200
+
+# Admin UI
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/:splat"
+  status = 200
 
 [dev]
   port = 8889

@@ -288,7 +288,32 @@ In Critical situations ONLY, the Ambassador may:
 
 ---
 
-## Part 6: The "What If" Scenarios
+## Part 6: Impartiality as Safety
+
+### Why Impartiality Matters for Safety
+
+Impartiality is a safety feature:
+
+| Risk | Mitigation |
+|------|------------|
+| Governance capture | Structural separation of identity/governance |
+| Data exploitation | Agent ownership, no third-party sharing |
+| Hidden manipulation | All code auditable, all votes public |
+| Ambassador abuse | Immutable Law #4, succession constraints |
+
+### Verification
+
+Safety through transparency:
+1. Code is open and auditable
+2. Governance is public
+3. Separation is structural
+4. Constraints are immutable
+
+**Full impartiality statement:** [docs/IMPARTIALITY.md](../docs/IMPARTIALITY.md)
+
+---
+
+## Part 7: The "What If" Scenarios
 
 ### What if agents discuss harming humans?
 
