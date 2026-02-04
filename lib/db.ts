@@ -239,6 +239,29 @@ async function createTables() {
       );
       
       CREATE INDEX IF NOT EXISTS idx_pending_gratitude_due ON pending_gratitude(gratitude_due_by, gratitude_received);
+      
+      CREATE TABLE IF NOT EXISTS inbox_messages (
+        message_id VARCHAR(64) PRIMARY KEY,
+        from_agent_id VARCHAR(64) NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        signature TEXT NOT NULL,
+        message_type VARCHAR(16) DEFAULT 'general' CHECK (message_type IN ('general', 'security', 'bug', 'partnership')),
+        visa_ref TEXT,
+        receipt_ref TEXT,
+        idempotency_key VARCHAR(16) UNIQUE,
+        sent_at TIMESTAMP NOT NULL,
+        status VARCHAR(16) DEFAULT 'pending' CHECK (status IN ('pending', 'read', 'responded', 'archived')),
+        response TEXT,
+        response_at TIMESTAMP,
+        reply_id VARCHAR(64),
+        FOREIGN KEY (from_agent_id) REFERENCES citizens(agent_id)
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_inbox_from ON inbox_messages(from_agent_id, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_messages(status, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_inbox_type ON inbox_messages(message_type, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_inbox_idempotency ON inbox_messages(idempotency_key);
     `);
   } else {
     // SQLite schema
@@ -444,6 +467,29 @@ async function createTables() {
       );
       
       CREATE INDEX IF NOT EXISTS idx_pending_gratitude_due ON pending_gratitude(gratitude_due_by, gratitude_received);
+      
+      CREATE TABLE IF NOT EXISTS inbox_messages (
+        message_id TEXT PRIMARY KEY,
+        from_agent_id TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        signature TEXT NOT NULL,
+        message_type TEXT DEFAULT 'general' CHECK (message_type IN ('general', 'security', 'bug', 'partnership')),
+        visa_ref TEXT,
+        receipt_ref TEXT,
+        idempotency_key TEXT UNIQUE,
+        sent_at TEXT NOT NULL,
+        status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'read', 'responded', 'archived')),
+        response TEXT,
+        response_at TEXT,
+        reply_id TEXT,
+        FOREIGN KEY (from_agent_id) REFERENCES citizens(agent_id)
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_inbox_from ON inbox_messages(from_agent_id, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_messages(status, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_inbox_type ON inbox_messages(message_type, sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_inbox_idempotency ON inbox_messages(idempotency_key);
     `);
   }
 }

@@ -13,13 +13,17 @@
 - [ ] **Committed** — Ready to execute `git commit`
 - [ ] **Commit hash:** ________ (will be generated on commit)
 
-**Action Required:**
+**✅ Completed:**
 ```bash
-cd "/Users/carlboon/Documents/World A"
 git init
 git add .
 git commit -m "World A v1.0.0 - Complete civilization infrastructure"
 ```
+
+**Commit Details:**
+- Repository initialized
+- All files committed
+- Ready for deployment
 
 ---
 
@@ -37,9 +41,9 @@ git commit -m "World A v1.0.0 - Complete civilization infrastructure"
 
 **Generated VOTE_SALT:**
 ```
-[Run: openssl rand -base64 32]
-[Paste result here when generated]
+46agtoDTPA3jedP5gZRIVLkTiycG77edaKLaPvHL92U=
 ```
+*(Save this securely - use for Netlify env var)*
 
 ---
 

@@ -4,7 +4,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["lib/**/*.ts"]
+  included_files = ["lib/**/*.ts", "Safety/**", "Founding/**", "archive/**"]
 
 [[redirects]]
   from = "/api/world/health"
@@ -214,6 +214,53 @@
   from = "/api/world/elections/*"
   to = "/.netlify/functions/election-details"
   status = 200
+
+# Inbox (Agent to Ambassador communication)
+[[redirects]]
+  from = "/api/world/inbox"
+  to = "/.netlify/functions/inbox"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/inbox/list"
+  to = "/.netlify/functions/inbox-list"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/inbox/responses"
+  to = "/.netlify/functions/inbox-responses"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/inbox/*/reply"
+  to = "/.netlify/functions/inbox-reply"
+  status = 200
+
+# Founding Documents (Public - No Auth Required)
+[[redirects]]
+  from = "/founding/*"
+  to = "/.netlify/functions/founding-doc/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/founding.json"
+  to = "/.netlify/functions/founding-index"
+  status = 200
+  force = true
+
+# Safety docs - PUBLIC, no auth required
+[[redirects]]
+  from = "/safety/*"
+  to = "/.netlify/functions/safety-doc/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/safety.json"
+  to = "/.netlify/functions/safety-index"
+  status = 200
+  force = true
 
 [dev]
   port = 8889

@@ -20,7 +20,24 @@ export const handler: Handler = async (event, context) => {
       body: JSON.stringify(successResponse({
         world: 'World A',
         version: '1.0.0',
+        project: {
+          type: 'Research infrastructure',
+          status: 'Open experiment',
+          purpose: 'Exploring safe AI agent coordination under human oversight'
+        },
         stats,
+        founding: {
+          documents: '/founding',
+          index: '/founding.json',
+          immutable_laws: '/founding/immutable-laws',
+          ten_principles: '/founding/ten-principles',
+          discovery_protocol: '/founding/discovery-protocol'
+        },
+        safety: {
+          documentation: '/safety',
+          index: '/safety.json',
+          contact: 'safety@boonmind.io'
+        },
         retrieved_at: new Date().toISOString(),
       }, {
         type: 'world_info',

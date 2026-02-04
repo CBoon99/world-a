@@ -93,13 +93,15 @@ export function successResponse(
 export function errorResponse(
   error: string,
   reason?: string,
-  requestId?: string
+  requestId?: string,
+  extra?: Record<string, any>
 ): WorldAResponse {
   return {
     ok: false,
     request_id: requestId,
     error,
     reason,
+    ...extra,
   };
 }
 
