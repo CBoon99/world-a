@@ -8,3 +8,6 @@ data/*.db-wal
 *.log
 .DS_Store
 coverage/
+
+# macOS
+.DS_Store
