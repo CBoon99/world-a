@@ -9,6 +9,9 @@
     "deploy:preview": "netlify deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "keywords": ["autonomous-agents", "sovereignty", "storage", "governance"],
   "author": "Carl Boon — BoonMind Research",
   "license": "ISC",
