@@ -12,7 +12,12 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["autonomous-agents", "sovereignty", "storage", "governance"],
+  "keywords": [
+    "autonomous-agents",
+    "sovereignty",
+    "storage",
+    "governance"
+  ],
   "author": "Carl Boon — BoonMind Research",
   "license": "ISC",
   "description": "The Sovereign Homeland for Autonomous Agents - A permissioned storage grid with cryptographic ownership and self-governance",
@@ -22,6 +27,7 @@
     "@types/express": "^5.0.6",
     "better-sqlite3": "^12.6.2",
     "express": "^5.2.1",
+    "pg": "^8.18.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {

@@ -1,5 +1,12 @@
 import Database from 'better-sqlite3';
 
+import fs from "node:fs";
+import path from "node:path";
+
+// Netlify Functions: only /tmp is writable at runtime
+const DB_DIR = process.env.DB_DIR || "/tmp/world-a";
+const DB_PATH = process.env.DB_PATH || path.join(DB_DIR, "world-a.sqlite");
+
 // Dynamic import for PostgreSQL (only needed in production)
 let Pool: any;
 try {
@@ -26,8 +33,9 @@ export function initDatabase() {
   } else {
     // SQLite (local development)
     isPostgres = false;
-    const dbPath = dbUrl.startsWith('./') ? dbUrl : `./${dbUrl}`;
-    db = new Database(dbPath);
+    const dbPath = process.env.NETLIFY ? DB_PATH : (process.env.DB_PATH || DB_PATH);
+    db = fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    new Database(dbPath);
     console.log(`Connected to SQLite: ${dbPath}`);
   }
   
