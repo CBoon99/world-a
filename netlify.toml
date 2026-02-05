@@ -382,5 +382,3 @@
   functions = "netlify/functions"
   command = "npm run dev"
 
-[env]
-  EMBASSY_URL = "https://embassy-trust-protocol.netlify.app"
