@@ -34,9 +34,9 @@ export function initDatabase() {
     // SQLite (local development)
     isPostgres = false;
     const dbPath = process.env.NETLIFY ? DB_PATH : (process.env.DB_PATH || DB_PATH);
-    db = fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-    new Database(dbPath);
-    console.log(`Connected to SQLite: ${dbPath}`);
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    db = new Database(dbPath);
+console.log(`Connected to SQLite: ${dbPath}`);
   }
   
   createTables();
