@@ -20,26 +20,134 @@ export interface AuthenticatedRequest {
 
 /**
  * Parse and validate request body
+ * Supports JSON body, query parameters, and headers
+ * 
+ * Extraction precedence (highest to lowest):
+ * 1. JSON body (POST/PUT/PATCH requests)
+ * 2. Query string parameters (GET requests)
+ * 3. Headers (any HTTP method)
+ * 
+ * This precedence ensures body data takes priority over query/headers,
+ * which is the standard REST API pattern.
  */
-export function parseRequest(event: any): WorldARequest {
-  try {
-    const body = JSON.parse(event.body || '{}');
-    return body;
-  } catch (error) {
-    throw new Error('Invalid JSON in request body');
+export function parseRequest(event: any): Partial<WorldARequest> {
+  const request: Partial<WorldARequest> = {};
+  
+  // Step 1: Try to parse JSON body (highest precedence)
+  // For POST/PUT/PATCH requests, body is the primary source
+  if (event.body) {
+    try {
+      const body = JSON.parse(event.body);
+      Object.assign(request, body);
+    } catch (error) {
+      // If body exists but isn't JSON, that's an error for POST
+      if (event.httpMethod === 'POST' || event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {
+        throw new Error('Invalid JSON in request body');
+      }
+      // For GET, ignore body parse errors
+    }
   }
+  
+  // Step 2: Extract from query string parameters (fallback if not in body)
+  // For GET requests, query params are the primary source
+  if (event.queryStringParameters) {
+    if (event.queryStringParameters.agent_id && !request.agent_id) {
+      request.agent_id = event.queryStringParameters.agent_id;
+    }
+    if (event.queryStringParameters.embassy_certificate && !request.embassy_certificate) {
+      request.embassy_certificate = event.queryStringParameters.embassy_certificate;
+    }
+    if (event.queryStringParameters.embassy_visa && !request.embassy_visa) {
+      request.embassy_visa = event.queryStringParameters.embassy_visa;
+    }
+  }
+  
+  // Step 3: Extract from headers (lowest precedence, fallback only)
+  // Headers are useful for programmatic clients that prefer header-based auth
+  const headers = event.headers || {};
+  const headerKeys = Object.keys(headers);
+  
+  // Normalize header keys to lowercase for lookup
+  const normalizedHeaders: Record<string, string> = {};
+  for (const key of headerKeys) {
+    const value = headers[key];
+    if (typeof value === 'string') {
+      normalizedHeaders[key.toLowerCase()] = value;
+    }
+  }
+  
+  // Check for agent_id in headers (only if not already found)
+  if (!request.agent_id) {
+    request.agent_id = normalizedHeaders['x-agent-id'] || 
+                       normalizedHeaders['x-agent_id'] ||
+                       normalizedHeaders['x-embassy-agent-id'];
+  }
+  
+  // Check for embassy_certificate in headers (only if not already found)
+  if (!request.embassy_certificate) {
+    request.embassy_certificate = normalizedHeaders['x-embassy-certificate'] ||
+                                   normalizedHeaders['x-embassy_certificate'] ||
+                                   normalizedHeaders['x-embassy-cert'];
+  }
+  
+  // Check for embassy_visa in headers (only if not already found)
+  if (!request.embassy_visa) {
+    request.embassy_visa = normalizedHeaders['x-embassy-visa'] ||
+                           normalizedHeaders['x-embassy_visa'];
+  }
+  
+  return request;
 }
 
 /**
  * Authenticate agent request
+ * Supports DEV_AUTH_BYPASS for local development
  */
 export async function authenticateRequest(
-  request: WorldARequest
+  request: Partial<WorldARequest>
 ): Promise<AuthenticatedRequest> {
   if (!request.agent_id) {
     throw new Error('AGENT_ONLY: Missing agent_id');
   }
 
+  // DEV_AUTH_BYPASS: Skip Embassy verification in local dev ONLY
+  // Safety guard: Only allow bypass in dev context (Netlify Dev or local)
+  const devBypassEnv = process.env.WORLD_A_DEV_AUTH_BYPASS === 'true';
+  const isDevContext = process.env.CONTEXT === 'dev' || process.env.NETLIFY_DEV === 'true';
+  const devBypass = devBypassEnv && isDevContext;
+  
+  // Warn if bypass is enabled but not in dev context (production safety)
+  if (devBypassEnv && !isDevContext) {
+    console.warn('[SECURITY] WORLD_A_DEV_AUTH_BYPASS is set but not in dev context. Bypass disabled.');
+  }
+  
+  if (devBypass) {
+    // Validate agent_id format (must start with expected prefix)
+    // Accept common prefixes: emb_, agent_, or any alphanumeric string
+    const agentIdPattern = /^[a-zA-Z0-9_-]+$/;
+    if (!agentIdPattern.test(request.agent_id)) {
+      throw new Error('AGENT_ONLY: Invalid agent_id format');
+    }
+    
+    // Return mock verification for dev bypass
+    return {
+      agent_id: request.agent_id,
+      agent_verification: {
+        ok: true,
+        valid: true,
+        entity_type: 'agent',
+        agent_id: request.agent_id,
+        dev_bypass: true,
+      },
+      embassy_certificate: request.embassy_certificate || 'DEV_BYPASS_CERT',
+      embassy_visa: request.embassy_visa,
+      request_id: request.request_id,
+      timestamp: request.timestamp,
+      data: request.data,
+    };
+  }
+
+  // Production: Require embassy_certificate
   if (!request.embassy_certificate) {
     throw new Error('AGENT_ONLY: Missing embassy_certificate');
   }

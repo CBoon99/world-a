@@ -4,10 +4,8 @@ import { initDatabase, queryOne, execute } from '../../lib/db';
 import { getRegistryStatus } from '../../lib/embassy-client';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Extract plot_id from path
     const pathMatch = event.path.match(/\/plots\/([^\/]+)\/transfer/);
@@ -88,11 +86,13 @@ export const handler: Handler = async (event, context) => {
 
     // Update ownership
     const now = new Date().toISOString();
-    const embassy_certificate_ref = crypto
-      .createHash('sha256')
-      .update(request.embassy_certificate)
-      .digest('hex')
-      .substring(0, 64);
+    const embassy_certificate_ref = authReq.embassy_certificate
+      ? crypto
+          .createHash('sha256')
+          .update(authReq.embassy_certificate)
+          .digest('hex')
+          .substring(0, 64)
+      : null;
 
     await execute(
       `UPDATE plots SET 

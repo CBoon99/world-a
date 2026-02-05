@@ -1,11 +1,26 @@
 [build]
   command = "npm run build"
-  functions = "netlify/functions"
   publish = "public"
 
+[build.environment]
+  NODE_VERSION = "20"
+  # Embassy Trust Protocol URL (required for production)
+  EMBASSY_URL = "https://embassy-trust-protocol.netlify.app"
+  # Dev auth bypass (set to "true" to skip Embassy verification in local dev)
+  # WORLD_A_DEV_AUTH_BYPASS = "false"
+
 [functions]
+  directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["lib/**/*.ts", "Safety/**", "Founding/**", "docs/**", "archive/**"]
+
+[functions."*"]
+  included_files = [
+    "lib/**/*.ts",
+    "Safety/**",
+    "Founding/**",
+    "docs/**",
+    "archive/**"
+  ]
 
 [[redirects]]
   from = "/api/world/health"
@@ -377,8 +392,10 @@
   to = "/admin/:splat"
   status = 200
 
-[dev]
-  port = 8889
-  functions = "netlify/functions"
-  command = "npm run dev"
+# Debug endpoint (dev-safe)
+[[redirects]]
+  from = "/api/world/whoami"
+  to = "/.netlify/functions/whoami"
+  status = 200
+
 

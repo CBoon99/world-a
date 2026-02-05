@@ -3,10 +3,8 @@ import { parseRequest, authenticateRequest, successResponse, errorResponse } fro
 import { getWorldStats } from '../../lib/world-info';
 import { initDatabase } from '../../lib/db';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Parse and authenticate request
     const request = parseRequest(event);
@@ -42,7 +40,7 @@ export const handler: Handler = async (event, context) => {
       }, {
         type: 'world_info',
         timestamp: new Date().toISOString(),
-      }, request.request_id)),
+      }, request.request_id || undefined)),
     };
   } catch (error: any) {
     return {

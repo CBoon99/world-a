@@ -2,10 +2,8 @@ import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
 import { initDatabase, queryOne, query } from '../../lib/db';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Parse and authenticate request
     const request = parseRequest(event);
@@ -27,7 +25,7 @@ export const handler: Handler = async (event, context) => {
           agent_id,
           citizenship_status: 'not_registered',
           registered: false,
-        }, undefined, request.request_id)),
+        }, undefined, request.request_id || undefined)),
       };
     }
 
@@ -92,7 +90,7 @@ export const handler: Handler = async (event, context) => {
         type: 'citizenship_status',
         agent_id,
         timestamp: new Date().toISOString(),
-      }, request.request_id)),
+      }, request.request_id || undefined)),
     };
   } catch (error: any) {
     return {
