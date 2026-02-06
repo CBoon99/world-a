@@ -26,7 +26,7 @@ export const handler: Handler = async (event) => {
     recentInbox,
     recentTickets
   ] = await Promise.all([
-    queryOne('SELECT COUNT(*) as count FROM citizens'),
+    queryOne('SELECT COUNT(*) as count FROM citizens WHERE agent_id != $1', ['worlda_system']),
     queryOne('SELECT COUNT(*) as count FROM plots WHERE owner_agent_id IS NOT NULL'),
     queryOne('SELECT COUNT(*) as count FROM commons_posts'),
     queryOne('SELECT COUNT(*) as count FROM inbox_messages WHERE status = $1', ['pending']),

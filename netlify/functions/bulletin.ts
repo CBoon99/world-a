@@ -18,7 +18,7 @@ export const handler: Handler = async (event) => {
     let elections: any[] = [];
     
     try {
-      const pop = await queryOne('SELECT COUNT(*) as count FROM citizens');
+      const pop = await queryOne('SELECT COUNT(*) as count FROM citizens WHERE agent_id != $1', ['worlda_system']);
       population = pop?.count || 0;
     } catch (e) { /* table may not exist */ }
     

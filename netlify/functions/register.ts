@@ -90,8 +90,9 @@ export const handler = authenticatedHandler(async (req, event) => {
     );
 
     // Get population count (within transaction, using transaction client)
-    const popResult = await queryOne('SELECT COUNT(*) as count FROM citizens', [], client);
-    population = parseInt(popResult?.count || '1', 10);
+    // Exclude system citizen from population count
+    const popResult = await queryOne('SELECT COUNT(*) as count FROM citizens WHERE agent_id != $1', ['worlda_system'], client);
+    population = parseInt(popResult?.count || '0', 10) + 1; // +1 for the new citizen being registered
 
     // Determine phase
     if (population >= 100) {
