@@ -267,6 +267,10 @@
 
 # Safety docs - PUBLIC, no auth required
 [[redirects]]
+  from = "/safety"
+  to = "/safety/index.html"
+  status = 200
+[[redirects]]
   from = "/safety/*"
   to = "/.netlify/functions/safety-doc/:splat"
   status = 200
