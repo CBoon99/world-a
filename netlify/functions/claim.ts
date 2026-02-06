@@ -2,15 +2,13 @@ import { authenticatedHandler, successResponse, errorResponse } from '../../lib/
 import { initDatabase, execute, queryOne } from '../../lib/db';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   // Verify agent is a citizen
   const citizen = await queryOne(
-    'SELECT * FROM citizens WHERE agent_id = ?',
+    'SELECT * FROM citizens WHERE agent_id = $1',
     [agent_id]
   );
 
@@ -54,7 +52,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Check if plot already exists and is claimed
   const existing = await queryOne(
-    `SELECT * FROM plots WHERE plot_id = ?`,
+    `SELECT * FROM plots WHERE plot_id = $1`,
     [plot_id]
   );
 
@@ -78,12 +76,12 @@ export const handler = authenticatedHandler(async (req, event) => {
     // Update existing unclaimed plot
     await execute(
       `UPDATE plots SET 
-        owner_agent_id = ?,
-        embassy_certificate_ref = ?,
-        claimed_at = ?,
-        display_name = ?,
-        public_description = ?
-      WHERE plot_id = ?`,
+        owner_agent_id = $1,
+        embassy_certificate_ref = $2,
+        claimed_at = $3,
+        display_name = $4,
+        public_description = $5
+      WHERE plot_id = $6`,
       [
         agent_id,
         embassy_certificate_ref,
@@ -101,7 +99,7 @@ export const handler = authenticatedHandler(async (req, event) => {
         owner_agent_id, embassy_certificate_ref, claimed_at,
         storage_allocation_gb, storage_used_bytes, permissions,
         display_name, public_description, terrain_type, elevation
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         plot_id,
         x,
@@ -122,7 +120,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Get the plot
   const plot = await queryOne(
-    `SELECT * FROM plots WHERE plot_id = ?`,
+    `SELECT * FROM plots WHERE plot_id = $1`,
     [plot_id]
   );
 

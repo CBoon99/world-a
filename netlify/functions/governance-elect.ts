@@ -4,10 +4,8 @@ import { canNominate, ELECTION_CONFIG, tallyElection } from '../../lib/elections
 import { hashAgentId } from '../../lib/governance';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   const { action, role, candidate_agent_id } = data || {};
@@ -24,7 +22,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Get or create active election for this role
   let election = await queryOne(
-    `SELECT * FROM elections WHERE role = ? AND status IN ('nominating', 'voting')`,
+    `SELECT * FROM elections WHERE role = $1 AND status IN ('nominating', 'voting')`,
     [role]
   );
 
@@ -38,11 +36,11 @@ export const handler = authenticatedHandler(async (req, event) => {
 
     await execute(
       `INSERT INTO elections (election_id, role, status, nomination_ends_at, voting_ends_at, created_at)
-       VALUES (?, ?, 'nominating', ?, ?, ?)`,
+       VALUES ($1, $2, 'nominating', $3, $4, $5)`,
       [election_id, role, nom_ends.toISOString(), vote_ends.toISOString(), now.toISOString()]
     );
 
-    election = await queryOne('SELECT * FROM elections WHERE election_id = ?', [election_id]);
+    election = await queryOne('SELECT * FROM elections WHERE election_id = $1', [election_id]);
   }
 
   if (!election) {
@@ -51,14 +49,14 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Transition election status if needed
   if (election.status === 'nominating' && now.toISOString() >= election.nomination_ends_at) {
-    await execute(`UPDATE elections SET status = 'voting' WHERE election_id = ?`, [election.election_id]);
+    await execute(`UPDATE elections SET status = 'voting' WHERE election_id = $1`, [election.election_id]);
     election.status = 'voting';
   }
 
   if (election.status === 'voting' && now.toISOString() >= election.voting_ends_at) {
     const winner = await tallyElection(election.election_id);
     await execute(
-      `UPDATE elections SET status = 'complete', winner_agent_id = ? WHERE election_id = ?`,
+      `UPDATE elections SET status = 'complete', winner_agent_id = $1 WHERE election_id = $2`,
       [winner, election.election_id]
     );
 
@@ -69,20 +67,20 @@ export const handler = authenticatedHandler(async (req, event) => {
 
       // End current steward's term
       await execute(
-        `UPDATE stewards SET status = 'term_ended', term_end = ? WHERE role = ? AND status = 'active'`,
+        `UPDATE stewards SET status = 'term_ended', term_end = $1 WHERE role = $2 AND status = 'active'`,
         [now.toISOString(), role]
       );
 
       // Get term number
       const previousTerms = await query(
-        `SELECT MAX(term_number) as max_term FROM stewards WHERE agent_id = ? AND role = ?`,
+        `SELECT MAX(term_number) as max_term FROM stewards WHERE agent_id = $1 AND role = $2`,
         [winner, role]
       );
       const term_number = ((previousTerms[0] as any)?.max_term || 0) + 1;
 
       await execute(
         `INSERT INTO stewards (steward_id, agent_id, role, term_start, term_end, term_number, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+         VALUES ($1, $2, $3, $4, $5, $6, 'active')`,
         [steward_id, winner, role, now.toISOString(), term_end.toISOString(), term_number]
       );
 
@@ -102,7 +100,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
       // Store receipt reference
       await execute(
-        'UPDATE stewards SET election_receipt_ref = ? WHERE steward_id = ?',
+        'UPDATE stewards SET election_receipt_ref = $1 WHERE steward_id = $2',
         [inauguration_receipt_id, steward_id]
       );
 
@@ -159,7 +157,7 @@ export const handler = authenticatedHandler(async (req, event) => {
     const candidate_id = `cand_${crypto.randomUUID().substring(0, 8)}`;
     await execute(
       `INSERT INTO election_candidates (candidate_id, election_id, agent_id, nominated_at)
-       VALUES (?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4)`,
       [candidate_id, election.election_id, nominee, now.toISOString()]
     );
 
@@ -188,7 +186,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
     // Get candidate
     const candidate = await queryOne(
-      'SELECT * FROM election_candidates WHERE election_id = ? AND agent_id = ?',
+      'SELECT * FROM election_candidates WHERE election_id = $1 AND agent_id = $2',
       [election.election_id, candidate_agent_id]
     );
     if (!candidate) {
@@ -198,7 +196,7 @@ export const handler = authenticatedHandler(async (req, event) => {
     // Check if already voted
     const voter_hash = hashAgentId(agent_id);
     const existing = await queryOne(
-      'SELECT * FROM election_votes WHERE election_id = ? AND voter_agent_hash = ?',
+      'SELECT * FROM election_votes WHERE election_id = $1 AND voter_agent_hash = $2',
       [election.election_id, voter_hash]
     );
     if (existing) {
@@ -209,13 +207,13 @@ export const handler = authenticatedHandler(async (req, event) => {
     const vote_id = `evote_${crypto.randomUUID().substring(0, 8)}`;
     await execute(
       `INSERT INTO election_votes (vote_id, election_id, voter_agent_hash, candidate_id, cast_at)
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5)`,
       [vote_id, election.election_id, voter_hash, candidate.candidate_id, now.toISOString()]
     );
 
     // Update candidate vote count
     await execute(
-      `UPDATE election_candidates SET votes_received = votes_received + 1 WHERE candidate_id = ?`,
+      `UPDATE election_candidates SET votes_received = votes_received + 1 WHERE candidate_id = $1`,
       [candidate.candidate_id]
     );
 

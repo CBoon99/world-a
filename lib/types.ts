@@ -11,15 +11,24 @@ export interface WorldARequest {
   data?: any;
 }
 
-export interface WorldAResponse {
-  ok: boolean;
+export interface SuccessResponse<T = any> {
+  ok: true;
   request_id?: string;
-  data?: any;
+  data: T;
   receipt?: Receipt;
-  error?: string;
-  reason?: string;
   pagination?: Pagination;
 }
+
+export interface ErrorResponse {
+  ok: false;
+  request_id?: string;
+  error: string;
+  message: string;
+  hint?: string;
+  [key: string]: any; // Allow extra fields for context
+}
+
+export type WorldAResponse<T = any> = SuccessResponse<T> | ErrorResponse;
 
 export interface Receipt {
   type: string;

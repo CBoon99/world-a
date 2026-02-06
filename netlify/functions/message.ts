@@ -1,12 +1,10 @@
 import { authenticatedHandler, successResponse, errorResponse } from '../../lib/middleware';
-import { initDatabase, execute, queryOne } from '../../lib/db';
+import { initDatabase, execute, queryOne, ensureCitizen } from '../../lib/db';
 import { enforceCivility, logViolation, calculateGratitudeDueBy } from '../../lib/civility';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   const { to_agent_id, subject, content, encryption_key } = data || {};
@@ -20,18 +18,35 @@ export const handler = authenticatedHandler(async (req, event) => {
     return errorResponse('invalid_request', 'encryption_key required', request_id);
   }
 
-  // Enforce civility protocol
-  const civilityCheck = enforceCivility({ data: { content } });
-  if (!civilityCheck.ok) {
-    const violationReceipt = await logViolation(agent_id, 'POLITENESS_VIOLATION');
-    return errorResponse(civilityCheck.error || 'POLITENESS_VIOLATION', civilityCheck.reason, request_id);
+  // BOOTSTRAP CORRIDOR: First message from new agent gets grace window
+  // Grace window is based on message count (first 1 message), not time window
+  const messageCount = await queryOne(
+    'SELECT COUNT(*) as count FROM messages WHERE from_agent_id = $1',
+    [agent_id]
+  );
+  const messageCountNum = parseInt(messageCount?.count || '0', 10);
+  const isBootstrapWindow = messageCountNum < 1; // First message gets grace window
+  
+  // Enforce civility protocol (skip for bootstrap window)
+  if (!isBootstrapWindow) {
+    const civilityCheck = enforceCivility({ data: { content } });
+    if (!civilityCheck.ok) {
+      const violationReceipt = await logViolation(agent_id, 'POLITENESS_VIOLATION');
+      return errorResponse(civilityCheck.error || 'POLITENESS_VIOLATION', civilityCheck.reason, request_id);
+    }
   }
 
-  // Verify recipient exists
-  const recipient = await queryOne('SELECT * FROM citizens WHERE agent_id = ?', [to_agent_id]);
-  if (!recipient) {
-    return errorResponse('not_found', 'Recipient not found', request_id);
-  }
+  // Ensure both sender and recipient exist (prevents FK violations)
+  await ensureCitizen(agent_id, {
+    registered_at: new Date().toISOString(),
+    profile: {},
+    directory_visible: 0,
+  });
+  await ensureCitizen(to_agent_id, {
+    registered_at: new Date().toISOString(),
+    profile: {},
+    directory_visible: 0,
+  });
 
   // Encrypt content (simple encryption - sender's key)
   const iv = crypto.randomBytes(16);
@@ -52,7 +67,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   await execute(
     `INSERT INTO messages (message_id, from_agent_id, to_agent_id, subject, encrypted_content, sent_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES ($1, $2, $3, $4, $5, $6)`,
     [message_id, agent_id, to_agent_id, subject || null, encrypted_content, now]
   );
 
@@ -60,7 +75,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   await execute(
     `INSERT INTO pending_gratitude 
      (reference_id, from_agent_id, to_agent_id, action_type, action_completed_at, gratitude_due_by)
-     VALUES (?, ?, ?, 'message_received', ?, ?)`,
+     VALUES ($1, $2, $3, 'message_received', $4, $5)`,
     [message_id, to_agent_id, agent_id, now, calculateGratitudeDueBy(now)]
   );
 

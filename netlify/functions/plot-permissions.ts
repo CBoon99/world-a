@@ -2,10 +2,8 @@ import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
 import { initDatabase, queryOne, execute } from '../../lib/db';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Extract plot_id from path
     const pathMatch = event.path.match(/\/plots\/([^\/]+)\/permissions/);

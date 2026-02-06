@@ -39,7 +39,7 @@ export const handler: Handler = async (event) => {
   await execute(
     `INSERT INTO commons_posts 
      (post_id, channel, author_agent_id, title, content, posted_at, pinned, status)
-     VALUES (?, 'announcements', 'system', ?, ?, ?, ?, 'visible')`,
+     VALUES ($1, 'announcements', 'worlda_system', $2, $3, $4, $5, 'visible')`,
     [post_id, title, content, now, pinned ? 1 : 0]
   );
   

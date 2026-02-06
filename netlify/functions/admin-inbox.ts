@@ -22,14 +22,15 @@ export const handler: Handler = async (event) => {
     
     const messages = await query(
       `SELECT * FROM inbox_messages 
-       WHERE status = ? 
+       WHERE status = $1 
        ORDER BY sent_at DESC 
-       LIMIT ?`,
+       LIMIT $2`,
       [status, limit]
     );
     
     const counts = await query(
-      `SELECT status, COUNT(*) as count FROM inbox_messages GROUP BY status`
+      `SELECT status, COUNT(*) as count FROM inbox_messages GROUP BY status`,
+      []
     );
     
     return {
@@ -62,8 +63,8 @@ export const handler: Handler = async (event) => {
     
     await execute(
       `UPDATE inbox_messages 
-       SET status = ?, response = ?, response_at = ?
-       WHERE message_id = ?`,
+       SET status = $1, response = $2, response_at = $3
+       WHERE message_id = $4`,
       [status || 'responded', response || null, now, message_id]
     );
     

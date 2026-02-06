@@ -4,10 +4,8 @@ import { getStorage } from '../../lib/storage';
 import { encryptBackup, generateKeyHint } from '../../lib/encryption';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   if (!data || !data.plot_id || !data.content || !data.encryption_key) {
@@ -22,7 +20,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Verify plot exists and agent owns it
   const plot = await queryOne(
-    `SELECT * FROM plots WHERE plot_id = ?`,
+    `SELECT * FROM plots WHERE plot_id = $1`,
     [plot_id]
   );
 
@@ -103,7 +101,7 @@ export const handler = authenticatedHandler(async (req, event) => {
       backup_id, agent_id, plot_id,
       backup_type, encrypted_content_ref, encryption_key_hint,
       content_hash, content_size_bytes, created_at, expires_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
       backupId,
       agent_id,

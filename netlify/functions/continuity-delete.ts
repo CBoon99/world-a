@@ -3,10 +3,8 @@ import { parseRequest, authenticateRequest, successResponse, errorResponse } fro
 import { initDatabase, queryOne, execute } from '../../lib/db';
 import { getStorage } from '../../lib/storage';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Extract backup_id from path
     const pathMatch = event.path.match(/\/continuity\/([^\/]+)/);
@@ -26,7 +24,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get backup record
     const backup = await queryOne(
-      `SELECT * FROM continuity_backups WHERE backup_id = ?`,
+      `SELECT * FROM continuity_backups WHERE backup_id = $1`,
       [backup_id]
     );
 
@@ -60,7 +58,7 @@ export const handler: Handler = async (event, context) => {
 
     // Delete from database
     await execute(
-      `DELETE FROM continuity_backups WHERE backup_id = ?`,
+      `DELETE FROM continuity_backups WHERE backup_id = $1`,
       [backup_id]
     );
 

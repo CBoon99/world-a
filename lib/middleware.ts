@@ -6,7 +6,7 @@
 import { Handler } from '@netlify/functions';
 import { verifyAgentCertificate, getRegistryStatus } from './embassy-client';
 import { enforceAgentOnly } from './permissions';
-import { WorldARequest, WorldAResponse } from './types';
+import { WorldARequest, WorldAResponse, SuccessResponse, ErrorResponse } from './types';
 
 export interface AuthenticatedRequest {
   agent_id: string;
@@ -162,6 +162,13 @@ export async function authenticateRequest(
   // Enforce agent-only
   enforceAgentOnly(verification);
 
+  // CRITICAL: Verify cert.agent_id matches requested agent_id
+  // This prevents agent A from using agent B's certificate
+  const certAgentId = verification.agent_id || verification.entity_id;
+  if (certAgentId && certAgentId !== request.agent_id) {
+    throw new Error(`AGENT_ONLY: Certificate agent_id (${certAgentId}) does not match requested agent_id (${request.agent_id})`);
+  }
+
   // Check registry status
   const registryStatus = await getRegistryStatus(request.agent_id);
   if (!registryStatus.exists || registryStatus.revoked) {
@@ -182,11 +189,11 @@ export async function authenticateRequest(
 /**
  * Create success response
  */
-export function successResponse(
-  data: any,
+export function successResponse<T = any>(
+  data: T,
   receipt?: any,
   requestId?: string
-): WorldAResponse {
+): SuccessResponse<T> {
   return {
     ok: true,
     request_id: requestId,
@@ -196,19 +203,33 @@ export function successResponse(
 }
 
 /**
- * Create error response
+ * Create error response with structured format
+ * All errors should use this format: { ok: false, code, message, hint }
  */
 export function errorResponse(
-  error: string,
-  reason?: string,
+  code: string,
+  message?: string,
   requestId?: string,
   extra?: Record<string, any>
-): WorldAResponse {
+): ErrorResponse {
+  // Map common error codes to HTTP hints
+  const hints: Record<string, string> = {
+    'AGENT_ONLY': 'This endpoint requires valid agent authentication',
+    'UNAUTHORIZED': 'Authentication required',
+    'PERMISSION_DENIED': 'You do not have permission for this action',
+    'NOT_FOUND': 'The requested resource was not found',
+    'VALIDATION_ERROR': 'Request validation failed',
+    'RATE_LIMIT': 'Rate limit exceeded',
+    'DATABASE_ERROR': 'Database operation failed',
+    'INTERNAL_ERROR': 'An internal error occurred',
+  };
+  
   return {
     ok: false,
     request_id: requestId,
-    error,
-    reason,
+    error: code,
+    message: message || code,
+    hint: hints[code] || 'See error code for details',
     ...extra,
   };
 }
@@ -238,15 +259,48 @@ export function authenticatedHandler(
         body: JSON.stringify(response),
       };
     } catch (error: any) {
+      // Log the underlying error server-side for debugging
+      console.error('[AUTH_ERROR]', {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Determine HTTP status code
+      let statusCode = 500;
+      if (error.message?.startsWith('AGENT_ONLY')) {
+        statusCode = 403;
+      } else if (error.message?.includes('UNAUTHORIZED') || error.message?.includes('Missing')) {
+        statusCode = 401;
+      } else if (error.message?.includes('NOT_FOUND')) {
+        statusCode = 404;
+      } else if (error.message?.includes('VALIDATION') || error.message?.includes('Invalid')) {
+        statusCode = 400;
+      }
+      
+      // Return structured error response
+      const errorCode = error.message?.startsWith('AGENT_ONLY') 
+        ? 'AGENT_ONLY' 
+        : error.message?.includes('UNAUTHORIZED')
+        ? 'UNAUTHORIZED'
+        : 'INTERNAL_ERROR';
+      
+      const errorResp = errorResponse(
+        errorCode,
+        error.message || 'Internal server error',
+        undefined,
+        { 
+          // Include stack trace only in dev mode
+          ...(process.env.NETLIFY_DEV === 'true' ? { stack: error.stack } : {}),
+        }
+      );
+      
       return {
-        statusCode: error.message?.startsWith('AGENT_ONLY') ? 403 : 400,
+        statusCode,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ok: false,
-          error: error.message || 'Internal server error',
-        }),
+        body: JSON.stringify(errorResp),
       };
     }
   };

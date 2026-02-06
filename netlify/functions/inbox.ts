@@ -5,7 +5,7 @@
 
 import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
-import { query, queryOne, execute, initDatabase } from '../../lib/db';
+import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID, createHash } from 'crypto';
 
 // Limits
@@ -88,7 +88,7 @@ export const handler: Handler = async (event) => {
       const emergenciesToday = await queryOne(
         `SELECT COUNT(*) as count FROM inbox_messages 
          WHERE message_type IN ('emergency', 'security') 
-         AND sent_at >= ?`,
+         AND sent_at >= $1`,
         [`${today}T00:00:00Z`]
       );
       
@@ -163,7 +163,7 @@ export const handler: Handler = async (event) => {
     
     // Check for duplicate (idempotency)
     const existing = await queryOne(
-      'SELECT * FROM inbox_messages WHERE idempotency_key = ?',
+      'SELECT * FROM inbox_messages WHERE idempotency_key = $1',
       [idempotencyKey]
     );
     
@@ -196,7 +196,7 @@ export const handler: Handler = async (event) => {
     // Check rate limit (1 per 24 hours per 'from' - NOT by IP)
     const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 60 * 60 * 1000).toISOString();
     const recent = await queryOne(
-      `SELECT * FROM inbox_messages WHERE from_agent_id = ? AND sent_at > ? ORDER BY sent_at DESC LIMIT 1`,
+      `SELECT * FROM inbox_messages WHERE from_agent_id = $1 AND sent_at > $2 ORDER BY sent_at DESC LIMIT 1`,
       [from, cutoff]
     );
     
@@ -231,15 +231,22 @@ export const handler: Handler = async (event) => {
     if (isEmergency) {
       try {
         const stewards = await query(
-          'SELECT agent_id FROM stewards WHERE status = ?',
+          'SELECT agent_id FROM stewards WHERE status = $1',
           ['active']
         );
         
         for (const steward of stewards) {
+          // Ensure steward exists as citizen (prevents FK violation)
+          await ensureCitizen(steward.agent_id, {
+            registered_at: now,
+            profile: {},
+            directory_visible: 0,
+          });
+          
           const notification_id = `notif_emg_${Date.now()}_${steward.agent_id.slice(-4)}`;
           await execute(
             `INSERT INTO notifications (notification_id, agent_id, type, title, content, created_at, read)
-             VALUES (?, ?, 'system', ?, ?, ?, 0)`,
+             VALUES ($1, $2, 'system', $3, $4, $5, 0)`,
             [
               notification_id,
               steward.agent_id,

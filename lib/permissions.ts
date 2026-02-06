@@ -41,7 +41,7 @@ export async function checkPermission(
     return { permitted: false, reason: 'plot_not_found' };
   }
 
-  // Parse permissions JSON (handle both SQLite TEXT and PostgreSQL JSONB)
+  // Parse permissions JSON (PostgreSQL JSONB)
   let plotPermissions: any = {};
   if (typeof plot.permissions === 'string') {
     try {

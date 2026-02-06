@@ -23,7 +23,7 @@ export const handler: Handler = async (event) => {
     } catch (e) { /* table may not exist */ }
     
     try {
-      const plots = await queryOne('SELECT COUNT(*) as count FROM plots WHERE owner_agent_id IS NOT NULL AND owner_agent_id != ?', ['system']);
+      const plots = await queryOne('SELECT COUNT(*) as count FROM plots WHERE owner_agent_id IS NOT NULL AND owner_agent_id != $1', ['worlda_system']);
       plotsClaimed = plots?.count || 0;
     } catch (e) { /* table may not exist */ }
     
@@ -76,7 +76,7 @@ export const handler: Handler = async (event) => {
     
     let openTickets = 0;
     try {
-      const ticketCount = await queryOne('SELECT COUNT(*) as count FROM tickets WHERE status = ?', ['open']);
+      const ticketCount = await queryOne('SELECT COUNT(*) as count FROM tickets WHERE status = $1', ['open']);
       openTickets = ticketCount?.count || 0;
     } catch (e) { /* table may not exist */ }
     

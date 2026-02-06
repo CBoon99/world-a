@@ -3,10 +3,8 @@ import { parseRequest, authenticateRequest, successResponse, errorResponse } fro
 import { initDatabase, queryOne } from '../../lib/db';
 import { checkPermission } from '../../lib/permissions';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Extract plot_id from path
     // Path format: /api/world/plots/plot_x123_y456

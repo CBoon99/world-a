@@ -11,3 +11,7 @@ coverage/
 
 # macOS
 .DS_Store
+
+# Local Netlify folder (includes cached functions-serve with wrong ABI)
+.netlify/
+.netlify

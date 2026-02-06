@@ -4,10 +4,8 @@ import { checkPermission } from '../../lib/permissions';
 import { getStorage } from '../../lib/storage';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   if (!data || !data.plot_id || !data.path || !data.content) {

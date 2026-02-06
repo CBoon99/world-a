@@ -10,6 +10,7 @@ export interface EmbassyVerification {
   valid: boolean;
   entity_type?: 'agent' | 'human' | 'organization';
   agent_id?: string;
+  entity_id?: string; // Alternative field name used by some Embassy responses
   reason?: string;
   certificate?: any;
 }

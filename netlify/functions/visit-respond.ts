@@ -4,10 +4,8 @@ import { initDatabase, execute, queryOne } from '../../lib/db';
 import { calculateGratitudeDueBy } from '../../lib/civility';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Parse and authenticate request
     const request = parseRequest(event);

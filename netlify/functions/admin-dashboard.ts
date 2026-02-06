@@ -29,12 +29,12 @@ export const handler: Handler = async (event) => {
     queryOne('SELECT COUNT(*) as count FROM citizens'),
     queryOne('SELECT COUNT(*) as count FROM plots WHERE owner_agent_id IS NOT NULL'),
     queryOne('SELECT COUNT(*) as count FROM commons_posts'),
-    queryOne('SELECT COUNT(*) as count FROM inbox_messages WHERE status = ?', ['pending']),
-    queryOne('SELECT COUNT(*) as count FROM tickets WHERE status = ?', ['open']),
-    queryOne('SELECT COUNT(*) as count FROM proposals WHERE status = ?', ['active']),
-    query('SELECT agent_id, profile, registered_at FROM citizens ORDER BY registered_at DESC LIMIT 10'),
-    query('SELECT * FROM inbox_messages ORDER BY sent_at DESC LIMIT 10'),
-    query('SELECT * FROM tickets WHERE status = ? ORDER BY created_at DESC LIMIT 10', ['open'])
+    queryOne('SELECT COUNT(*) as count FROM inbox_messages WHERE status = $1', ['pending']),
+    queryOne('SELECT COUNT(*) as count FROM tickets WHERE status = $1', ['open']),
+    queryOne('SELECT COUNT(*) as count FROM proposals WHERE status = $1', ['active']),
+    query('SELECT agent_id, profile, registered_at FROM citizens ORDER BY registered_at DESC LIMIT 10', []),
+    query('SELECT * FROM inbox_messages ORDER BY sent_at DESC LIMIT 10', []),
+    query('SELECT * FROM tickets WHERE status = $1 ORDER BY created_at DESC LIMIT 10', ['open'])
   ]);
   
   // Parse profile JSON for citizens

@@ -3,10 +3,8 @@ import { initDatabase, execute, queryOne } from '../../lib/db';
 import { containsGratitude } from '../../lib/civility';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   const { reference_id, message } = data || {};

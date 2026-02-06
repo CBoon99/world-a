@@ -28,7 +28,7 @@ export const handler: Handler = async (event) => {
     // Store token
     await execute(
       `INSERT INTO admin_tokens (token_hash, email, expires_at, used)
-       VALUES (?, ?, ?, 0)`,
+       VALUES ($1, $2, $3, 0)`,
       [createHash('sha256').update(token).digest('hex'), email, expires]
     );
     
@@ -68,7 +68,7 @@ export const handler: Handler = async (event) => {
     
     const valid = await queryOne(
       `SELECT * FROM admin_tokens 
-       WHERE token_hash = ? AND expires_at > ? AND used = 0`,
+       WHERE token_hash = $1 AND expires_at > $2 AND used = 0`,
       [tokenHash, now]
     );
     
@@ -82,7 +82,7 @@ export const handler: Handler = async (event) => {
     
     // Mark token as used
     await execute(
-      'UPDATE admin_tokens SET used = 1 WHERE token_hash = ?',
+      'UPDATE admin_tokens SET used = 1 WHERE token_hash = $1',
       [tokenHash]
     );
     
@@ -92,7 +92,7 @@ export const handler: Handler = async (event) => {
     
     await execute(
       `INSERT INTO admin_sessions (session_id, email, expires_at)
-       VALUES (?, ?, ?)`,
+       VALUES ($1, $2, $3)`,
       [createHash('sha256').update(sessionId).digest('hex'), valid.email, sessionExpires]
     );
     

@@ -4,10 +4,8 @@ import { getStorage } from '../../lib/storage';
 import { decryptBackup } from '../../lib/encryption';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   if (!data || !data.backup_id || !data.encryption_key) {
@@ -22,7 +20,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Get backup record
   const backup = await queryOne(
-    `SELECT * FROM continuity_backups WHERE backup_id = ?`,
+    `SELECT * FROM continuity_backups WHERE backup_id = $1`,
     [backup_id]
   );
 

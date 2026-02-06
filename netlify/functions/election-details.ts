@@ -2,10 +2,8 @@ import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
 import { initDatabase, query, queryOne } from '../../lib/db';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Parse and authenticate request
     const request = parseRequest(event);
@@ -25,7 +23,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get election
     const election = await queryOne(
-      'SELECT * FROM elections WHERE election_id = ?',
+      'SELECT * FROM elections WHERE election_id = $1',
       [election_id]
     );
 
@@ -39,13 +37,13 @@ export const handler: Handler = async (event, context) => {
 
     // Get candidates with vote counts
     const candidates = await query(
-      'SELECT * FROM election_candidates WHERE election_id = ? ORDER BY votes_received DESC',
+      'SELECT * FROM election_candidates WHERE election_id = $1 ORDER BY votes_received DESC',
       [election_id]
     );
 
     // Get total votes
     const votes = await query(
-      'SELECT COUNT(*) as count FROM election_votes WHERE election_id = ?',
+      'SELECT COUNT(*) as count FROM election_votes WHERE election_id = $1',
       [election_id]
     );
 

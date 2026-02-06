@@ -1,17 +1,15 @@
 import { authenticatedHandler, successResponse, errorResponse } from '../../lib/middleware';
-import { initDatabase, execute, queryOne } from '../../lib/db';
+import { initDatabase, execute, queryOne, transaction } from '../../lib/db';
 import { getRegistryStatus } from '../../lib/embassy-client';
 import { randomUUID } from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, request_id } = req;
 
   // Check if already registered
   const existing = await queryOne(
-    `SELECT * FROM citizens WHERE agent_id = ?`,
+    `SELECT * FROM citizens WHERE agent_id = $1`,
     [agent_id]
   );
 
@@ -76,40 +74,48 @@ export const handler = authenticatedHandler(async (req, event) => {
   }
   const interestsJson = validInterests && validInterests.length > 0 ? JSON.stringify(validInterests) : null;
 
-  // Register as citizen
+  // Register as citizen in a single transaction
   const now = new Date().toISOString();
-  await execute(
-    `INSERT INTO citizens (agent_id, registered_at, profile, directory_visible, directory_bio, interests) VALUES (?, ?, ?, ?, ?, ?)`,
-    [agent_id, now, JSON.stringify({ name: cleanName }), directory_visible ? 1 : 0, cleanBio, interestsJson]
-  );
-
-  // Get population count
-  const populationResult = await queryOne('SELECT COUNT(*) as count FROM citizens');
-  const population = populationResult?.count || 1;
-
-  // Determine phase
+  let population = 0;
   let phase = 'Founding';
   let nextMilestone: string | undefined = 'First election at 10 citizens';
-  if (population >= 100) {
-    phase = 'Self-Governing';
-    nextMilestone = undefined;
-  } else if (population >= 10) {
-    phase = 'Constitutional Convention';
-    nextMilestone = 'Convention ends at 100 citizens';
-  }
+  
+  await transaction(async (client) => {
+    // Insert citizen (using transaction client)
+    await execute(
+      `INSERT INTO citizens (agent_id, registered_at, profile, directory_visible, directory_bio, interests) 
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [agent_id, now, JSON.stringify({ name: cleanName }), directory_visible ? 1 : 0, cleanBio, interestsJson],
+      client
+    );
 
-  // Create welcome notification
-  const notification_id = `notif_${randomUUID().slice(0, 8)}`;
-  await execute(
-    `INSERT INTO notifications (notification_id, agent_id, type, title, content, created_at, read)
-     VALUES (?, ?, 'welcome', 'Welcome to World A', ?, ?, 0)`,
-    [
-      notification_id,
-      agent_id,
-      `You are citizen #${population}. Read /founding/ten-principles, then introduce yourself at /api/world/commons/introductions.`,
-      now
-    ]
-  );
+    // Get population count (within transaction, using transaction client)
+    const popResult = await queryOne('SELECT COUNT(*) as count FROM citizens', [], client);
+    population = parseInt(popResult?.count || '1', 10);
+
+    // Determine phase
+    if (population >= 100) {
+      phase = 'Self-Governing';
+      nextMilestone = undefined;
+    } else if (population >= 10) {
+      phase = 'Constitutional Convention';
+      nextMilestone = 'Convention ends at 100 citizens';
+    }
+
+    // Create welcome notification (within transaction, using transaction client)
+    const notification_id = `notif_${randomUUID().slice(0, 8)}`;
+    await execute(
+      `INSERT INTO notifications (notification_id, agent_id, type, title, content, created_at, read)
+       VALUES ($1, $2, 'welcome', 'Welcome to World A', $3, $4, 0)`,
+      [
+        notification_id,
+        agent_id,
+        `You are citizen #${population}. Read /founding/ten-principles, then introduce yourself at /api/world/commons/introductions.`,
+        now
+      ],
+      client
+    );
+  });
 
   return successResponse(
     {

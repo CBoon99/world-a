@@ -4,7 +4,7 @@
 
 import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
-import { query, queryOne, execute, initDatabase } from '../../lib/db';
+import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
 const VALID_CHANNELS = ['announcements', 'introductions', 'proposals', 'help', 'general'];
@@ -74,16 +74,17 @@ async function handleRead(event: any, channel: string) {
   let sql = `
     SELECT post_id, channel, author_agent_id, title, content, posted_at, pinned, reply_to_post_id
     FROM commons_posts 
-    WHERE channel = ? AND status = 'visible'
+    WHERE channel = $1 AND status = 'visible'
   `;
   const sqlParams: any[] = [channel];
+  let paramIndex = 2;
   
   if (before) {
-    sql += ` AND posted_at < ?`;
+    sql += ` AND posted_at < $${paramIndex++}`;
     sqlParams.push(before);
   }
   
-  sql += ` ORDER BY pinned DESC, posted_at DESC LIMIT ?`;
+  sql += ` ORDER BY pinned DESC, posted_at DESC LIMIT $${paramIndex++}`;
   sqlParams.push(limit);
   
   const posts = await query(sql, sqlParams);
@@ -151,7 +152,7 @@ async function handlePost(event: any, channel: string) {
   let parentPost = null;
   if (reply_to) {
     parentPost = await queryOne(
-      'SELECT * FROM commons_posts WHERE post_id = ? AND status = ?',
+      'SELECT * FROM commons_posts WHERE post_id = $1 AND status = $2',
       [reply_to, 'visible']
     );
     if (!parentPost) {
@@ -221,14 +222,14 @@ async function handlePost(event: any, channel: string) {
   const now = new Date().toISOString();
   
   let rateLimit = await queryOne(
-    'SELECT * FROM commons_rate_limits WHERE agent_id = ?',
+    'SELECT * FROM commons_rate_limits WHERE agent_id = $1',
     [agent_id]
   );
   
   if (!rateLimit) {
     // First post ever
     await execute(
-      'INSERT INTO commons_rate_limits (agent_id, posts_today, last_post_at, day_reset) VALUES (?, 0, NULL, ?)',
+      'INSERT INTO commons_rate_limits (agent_id, posts_today, last_post_at, day_reset) VALUES ($1, 0, NULL, $2)',
       [agent_id, today]
     );
     rateLimit = { posts_today: 0, last_post_at: null, day_reset: today };
@@ -237,7 +238,7 @@ async function handlePost(event: any, channel: string) {
   // Reset counter if new day
   if (rateLimit.day_reset !== today) {
     await execute(
-      'UPDATE commons_rate_limits SET posts_today = 0, day_reset = ? WHERE agent_id = ?',
+      'UPDATE commons_rate_limits SET posts_today = 0, day_reset = $1 WHERE agent_id = $2',
       [today, agent_id]
     );
     rateLimit.posts_today = 0;
@@ -279,21 +280,45 @@ async function handlePost(event: any, channel: string) {
     }
   }
   
+  // BOOTSTRAP CORRIDOR: First 2 posts from a new agent get grace window
+  // This prevents deadlock where civility/policy gating blocks first actions
+  // Grace window is based on post count (first 2 posts), not time window
+  const postCount = await queryOne(
+    'SELECT COUNT(*) as count FROM commons_posts WHERE author_agent_id = $1',
+    [agent_id]
+  );
+  const postCountNum = parseInt(postCount?.count || '0', 10);
+  const isBootstrapWindow = postCountNum < 2; // First 2 posts get grace window
+  
+  // Ensure citizen exists (idempotent, prevents FK violations)
+  await ensureCitizen(agent_id, {
+    registered_at: now,
+    profile: {},
+    directory_visible: 0,
+  });
+
   // Create post
   const post_id = `post_${randomUUID().slice(0, 8)}`;
   
   await execute(
     `INSERT INTO commons_posts (post_id, channel, author_agent_id, title, content, posted_at, status, reply_to_post_id)
-     VALUES (?, ?, ?, ?, ?, ?, 'visible', ?)`,
+     VALUES ($1, $2, $3, $4, $5, $6, 'visible', $7)`,
     [post_id, channel, agent_id, cleanTitle, cleanContent, now, reply_to || null]
   );
   
   // Create reply notification if this is a reply
   if (reply_to && parentPost && parentPost.author_agent_id !== agent_id) {
+    // Ensure parent author exists as citizen (prevents FK violation)
+    await ensureCitizen(parentPost.author_agent_id, {
+      registered_at: now,
+      profile: {},
+      directory_visible: 0,
+    });
+    
     const notification_id = `notif_${randomUUID().slice(0, 8)}`;
     await execute(
       `INSERT INTO notifications (notification_id, agent_id, type, reference_id, title, content, created_at, read)
-       VALUES (?, ?, 'reply', ?, ?, ?, ?, 0)`,
+       VALUES ($1, $2, 'reply', $3, $4, $5, $6, 0)`,
       [
         notification_id,
         parentPost.author_agent_id,
@@ -317,17 +342,18 @@ async function handlePost(event: any, channel: string) {
   for (const mentionedId of mentions) {
     if (mentionedId === agent_id) continue; // Don't notify self
     
-    // Check if mentioned agent is a citizen
-    const mentionedCitizen = await queryOne(
-      'SELECT agent_id FROM citizens WHERE agent_id = ?',
-      [mentionedId]
-    );
+    // Ensure mentioned agent exists as citizen (prevents FK violation)
+    const mentionedCitizen = await ensureCitizen(mentionedId, {
+      registered_at: now,
+      profile: {},
+      directory_visible: 0,
+    });
     
     if (mentionedCitizen) {
       const notification_id = `notif_${randomUUID().slice(0, 8)}`;
       await execute(
         `INSERT INTO notifications (notification_id, agent_id, type, reference_id, title, content, created_at, read)
-         VALUES (?, ?, 'mention', ?, ?, ?, ?, 0)`,
+         VALUES ($1, $2, 'mention', $3, $4, $5, $6, 0)`,
         [
           notification_id,
           mentionedId,
@@ -342,7 +368,7 @@ async function handlePost(event: any, channel: string) {
   
   // Update rate limit
   await execute(
-    'UPDATE commons_rate_limits SET posts_today = posts_today + 1, last_post_at = ? WHERE agent_id = ?',
+    'UPDATE commons_rate_limits SET posts_today = posts_today + 1, last_post_at = $1 WHERE agent_id = $2',
     [now, agent_id]
   );
   

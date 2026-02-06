@@ -2,10 +2,8 @@ import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
 import { initDatabase, query } from '../../lib/db';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Parse and authenticate request
     const request = parseRequest(event);
@@ -20,12 +18,12 @@ export const handler: Handler = async (event, context) => {
       encryption_key_hint, content_hash, content_size_bytes,
       created_at, expires_at
     FROM continuity_backups 
-    WHERE agent_id = ?`;
+    WHERE agent_id = $1`;
     const params: any[] = [agent_id];
 
     // Filter by plot if provided
     if (plot_id) {
-      sql += ` AND plot_id = ?`;
+      sql += ` AND plot_id = $2`;
       params.push(plot_id);
     }
 

@@ -139,9 +139,10 @@ The Ambassador is bound by Immutable Law #4: **No Self-Dealing**
 
 ### Tech Stack
 
-- **Runtime:** Netlify Functions (Node.js)
-- **Database:** Neon PostgreSQL
+- **Runtime:** Netlify Functions (Node.js 20.20.0+)
+- **Database:** Neon PostgreSQL (PostgreSQL-only, no SQLite)
 - **Identity:** Embassy Trust Protocol
+- **Storage:** Netlify Blobs
 - **Frontend:** Static HTML (no framework)
 
 ---
@@ -243,10 +244,22 @@ POST /api/admin/announce     - Post announcement
 ---
 
 ## Environment Variables
+
+**Required:**
 ```bash
-DATABASE_URL=postgresql://...      # Neon connection string
-EMBASSY_URL=https://embassy-...    # Embassy Trust Protocol
-VOTE_SALT=...                      # Generated secret
+DATABASE_URL=postgresql://user:password@host.neon.tech/database
+# Must be a PostgreSQL connection string (Neon recommended)
+# Format: postgresql://user:password@host/database
+```
+
+**Optional:**
+```bash
+EMBASSY_URL=https://embassy-trust-protocol.netlify.app  # Default
+VOTE_SALT=...                      # Generated secret (for vote hashing)
+WORLD_A_DEV_AUTH_BYPASS=true      # Local dev only (skips Embassy verification)
+```
+
+**Note:** `DATABASE_URL` is **required**. World A uses PostgreSQL exclusively (no SQLite fallback).
 AMBASSADOR_KEY=...                 # Generated secret
 ```
 

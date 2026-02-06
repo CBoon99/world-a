@@ -6,7 +6,7 @@
 
 import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
-import { query, queryOne, execute, initDatabase } from '../../lib/db';
+import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
 const VALID_CATEGORIES = ['bug', 'feature', 'docs', 'question', 'other'];
@@ -80,23 +80,24 @@ async function handleList(event: any) {
   
   let sql = 'SELECT ticket_id, category, title, description, severity, status, created_at, upvotes FROM tickets WHERE 1=1';
   const sqlParams: any[] = [];
+  let paramIndex = 1;
   
   if (status) {
-    sql += ' AND status = ?';
+    sql += ` AND status = $${paramIndex++}`;
     sqlParams.push(status);
   }
   
   if (category) {
-    sql += ' AND category = ?';
+    sql += ` AND category = $${paramIndex++}`;
     sqlParams.push(category);
   }
   
   if (before) {
-    sql += ' AND created_at < ?';
+    sql += ` AND created_at < $${paramIndex++}`;
     sqlParams.push(before);
   }
   
-  sql += ' ORDER BY upvotes DESC, created_at DESC LIMIT ?';
+  sql += ` ORDER BY upvotes DESC, created_at DESC LIMIT $${paramIndex++}`;
   sqlParams.push(limit);
   
   const tickets = await query(sql, sqlParams);
@@ -105,7 +106,8 @@ async function handleList(event: any) {
   let counts: any = {};
   try {
     const countResults = await query(
-      `SELECT status, COUNT(*) as count FROM tickets GROUP BY status`
+      `SELECT status, COUNT(*) as count FROM tickets GROUP BY status`,
+      []
     );
     counts = countResults.reduce((acc: any, c: any) => { acc[c.status] = c.count; return acc; }, {});
   } catch (e) {
@@ -228,13 +230,13 @@ async function handleCreate(event: any) {
   const now = new Date().toISOString();
   
   let rateLimit = await queryOne(
-    'SELECT * FROM ticket_rate_limits WHERE agent_id = ?',
+    'SELECT * FROM ticket_rate_limits WHERE agent_id = $1',
     [agent_id]
   );
   
   if (!rateLimit) {
     await execute(
-      'INSERT INTO ticket_rate_limits (agent_id, tickets_today, last_ticket_at, day_reset) VALUES (?, 0, NULL, ?)',
+      'INSERT INTO ticket_rate_limits (agent_id, tickets_today, last_ticket_at, day_reset) VALUES ($1, 0, NULL, $2)',
       [agent_id, today]
     );
     rateLimit = { tickets_today: 0, day_reset: today };
@@ -243,7 +245,7 @@ async function handleCreate(event: any) {
   // Reset if new day
   if (rateLimit.day_reset !== today) {
     await execute(
-      'UPDATE ticket_rate_limits SET tickets_today = 0, day_reset = ? WHERE agent_id = ?',
+      'UPDATE ticket_rate_limits SET tickets_today = 0, day_reset = $1 WHERE agent_id = $2',
       [today, agent_id]
     );
     rateLimit.tickets_today = 0;
@@ -265,18 +267,25 @@ async function handleCreate(event: any) {
     };
   }
   
+  // Ensure citizen exists (prevents FK violation)
+  await ensureCitizen(agent_id, {
+    registered_at: now,
+    profile: {},
+    directory_visible: 0,
+  });
+  
   // Create ticket
   const ticket_id = `tkt_${randomUUID().slice(0, 8)}`;
   
   await execute(
     `INSERT INTO tickets (ticket_id, author_agent_id, category, title, description, severity, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'open', ?)`,
+     VALUES ($1, $2, $3, $4, $5, $6, 'open', $7)`,
     [ticket_id, agent_id, category, cleanTitle, cleanDescription, ticketSeverity, now]
   );
   
   // Update rate limit
   await execute(
-    'UPDATE ticket_rate_limits SET tickets_today = tickets_today + 1, last_ticket_at = ? WHERE agent_id = ?',
+    'UPDATE ticket_rate_limits SET tickets_today = tickets_today + 1, last_ticket_at = $1 WHERE agent_id = $2',
     [now, agent_id]
   );
   
@@ -326,7 +335,7 @@ async function handleUpvote(event: any) {
   const ticket_id = pathParts[pathParts.length - 2]; // .../tickets/:id/upvote
   
   // Check ticket exists
-  const ticket = await queryOne('SELECT * FROM tickets WHERE ticket_id = ?', [ticket_id]);
+  const ticket = await queryOne('SELECT * FROM tickets WHERE ticket_id = $1', [ticket_id]);
   if (!ticket) {
     return {
       statusCode: 404,
@@ -337,7 +346,7 @@ async function handleUpvote(event: any) {
   
   // Check if already upvoted
   const existing = await queryOne(
-    'SELECT * FROM ticket_upvotes WHERE ticket_id = ? AND agent_id = ?',
+    'SELECT * FROM ticket_upvotes WHERE ticket_id = $1 AND agent_id = $2',
     [ticket_id, agent_id]
   );
   
@@ -352,17 +361,17 @@ async function handleUpvote(event: any) {
   // Add upvote
   const now = new Date().toISOString();
   await execute(
-    'INSERT INTO ticket_upvotes (ticket_id, agent_id, upvoted_at) VALUES (?, ?, ?)',
+    'INSERT INTO ticket_upvotes (ticket_id, agent_id, upvoted_at) VALUES ($1, $2, $3)',
     [ticket_id, agent_id, now]
   );
   
   // Update ticket count
   await execute(
-    'UPDATE tickets SET upvotes = upvotes + 1 WHERE ticket_id = ?',
+    'UPDATE tickets SET upvotes = upvotes + 1 WHERE ticket_id = $1',
     [ticket_id]
   );
   
-  const updated = await queryOne('SELECT upvotes FROM tickets WHERE ticket_id = ?', [ticket_id]);
+  const updated = await queryOne('SELECT upvotes FROM tickets WHERE ticket_id = $1', [ticket_id]);
   
   return {
     statusCode: 200,

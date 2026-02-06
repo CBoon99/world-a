@@ -3,10 +3,8 @@ import { parseRequest, authenticateRequest, successResponse, errorResponse } fro
 import { getWorldMap } from '../../lib/world-info';
 import { initDatabase } from '../../lib/db';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler: Handler = async (event, context) => {
+  await initDatabase();
   try {
     // Parse and authenticate request
     const request = parseRequest(event);

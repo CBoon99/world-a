@@ -1,12 +1,10 @@
 import { authenticatedHandler, successResponse, errorResponse } from '../../lib/middleware';
-import { initDatabase, execute, queryOne } from '../../lib/db';
+import { initDatabase, execute, queryOne, ensureCitizen } from '../../lib/db';
 import { PROPOSAL_CONFIG, getTotalEligibleVoters } from '../../lib/governance';
 import crypto from 'crypto';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   const { type = 'standard', title, body } = data || {};
@@ -20,11 +18,12 @@ export const handler = authenticatedHandler(async (req, event) => {
     return errorResponse('invalid_request', 'Invalid proposal type', request_id);
   }
 
-  // Verify citizen
-  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = ?', [agent_id]);
-  if (!citizen) {
-    return errorResponse('permission_denied', 'Must be citizen to propose', request_id);
-  }
+  // Ensure citizen exists (idempotent, prevents FK violation)
+  await ensureCitizen(agent_id, {
+    registered_at: new Date().toISOString(),
+    profile: {},
+    directory_visible: 0,
+  });
 
   const config = PROPOSAL_CONFIG[type as keyof typeof PROPOSAL_CONFIG];
   const now = new Date();
@@ -43,7 +42,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   await execute(
     `INSERT INTO proposals 
      (proposal_id, type, title, body, proposer_agent_id, proposer_certificate_ref, submitted_at, discussion_ends_at, voting_ends_at, total_eligible)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [proposal_id, type, title, body, agent_id, embassy_certificate_ref, now.toISOString(), 
      discussion_ends.toISOString(), voting_ends.toISOString(), total_eligible]
   );

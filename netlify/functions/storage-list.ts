@@ -2,10 +2,8 @@ import { authenticatedHandler, successResponse, errorResponse } from '../../lib/
 import { initDatabase, query } from '../../lib/db';
 import { checkPermission } from '../../lib/permissions';
 
-// Initialize database on module load
-initDatabase();
-
 export const handler = authenticatedHandler(async (req, event) => {
+  await initDatabase();
   const { agent_id, data, request_id } = req;
 
   if (!data || !data.plot_id) {
