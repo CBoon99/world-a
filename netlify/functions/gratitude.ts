@@ -25,7 +25,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Find pending gratitude
   const pending = await queryOne(
-    'SELECT * FROM pending_gratitude WHERE reference_id = ? AND from_agent_id = ?',
+    'SELECT * FROM pending_gratitude WHERE reference_id = $1 AND from_agent_id = $2',
     [reference_id, agent_id]
   );
 
@@ -42,19 +42,19 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Mark gratitude received
   await execute(
-    'UPDATE pending_gratitude SET gratitude_received = 1 WHERE reference_id = ?',
+    'UPDATE pending_gratitude SET gratitude_received = 1 WHERE reference_id = $1',
     [reference_id]
   );
 
   // Update sender's gratitude_given
   await execute(
-    'UPDATE citizens SET gratitude_given = gratitude_given + 1, politeness_score = politeness_score + 1 WHERE agent_id = ?',
+    'UPDATE citizens SET gratitude_given = gratitude_given + 1, politeness_score = politeness_score + 1 WHERE agent_id = $1',
     [agent_id]
   );
 
   // Update recipient's gratitude_received
   await execute(
-    'UPDATE citizens SET gratitude_received = gratitude_received + 1, politeness_score = politeness_score + 1 WHERE agent_id = ?',
+    'UPDATE citizens SET gratitude_received = gratitude_received + 1, politeness_score = politeness_score + 1 WHERE agent_id = $1',
     [pending.to_agent_id]
   );
 

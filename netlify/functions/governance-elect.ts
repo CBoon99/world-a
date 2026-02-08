@@ -147,7 +147,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
     // Check if already nominated
     const existing = await queryOne(
-      'SELECT * FROM election_candidates WHERE election_id = ? AND agent_id = ?',
+      'SELECT * FROM election_candidates WHERE election_id = $1 AND agent_id = $2',
       [election.election_id, nominee]
     );
     if (existing) {

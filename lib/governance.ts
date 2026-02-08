@@ -57,7 +57,7 @@ export async function getTotalEligibleVoters(): Promise<number> {
  * Check if quorum is met
  */
 export async function checkQuorum(proposal_id: string): Promise<boolean> {
-  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = ?', [proposal_id]);
+  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = $1', [proposal_id]);
   if (!proposal) return false;
   
   const config = PROPOSAL_CONFIG[proposal.type as keyof typeof PROPOSAL_CONFIG];
@@ -72,7 +72,7 @@ export async function checkQuorum(proposal_id: string): Promise<boolean> {
  * Check if threshold is met
  */
 export async function checkThreshold(proposal_id: string): Promise<boolean> {
-  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = ?', [proposal_id]);
+  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = $1', [proposal_id]);
   if (!proposal) return false;
   
   const config = PROPOSAL_CONFIG[proposal.type as keyof typeof PROPOSAL_CONFIG];
@@ -88,14 +88,14 @@ export async function checkThreshold(proposal_id: string): Promise<boolean> {
  * Transition proposal status based on timestamps
  */
 export async function transitionProposalStatus(proposal_id: string): Promise<string> {
-  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = ?', [proposal_id]);
+  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = $1', [proposal_id]);
   if (!proposal) return 'not_found';
   
   const now = new Date().toISOString();
   
   // Discussion → Voting
   if (proposal.status === 'discussion' && now >= proposal.discussion_ends_at) {
-    await execute('UPDATE proposals SET status = ? WHERE proposal_id = ?', ['voting', proposal_id]);
+    await execute('UPDATE proposals SET status = $1 WHERE proposal_id = $2', ['voting', proposal_id]);
     return 'voting';
   }
   
@@ -106,7 +106,7 @@ export async function transitionProposalStatus(proposal_id: string): Promise<str
     const new_status = threshold_met ? 'passed' : 'failed';
     
     await execute(
-      'UPDATE proposals SET status = ?, quorum_met = ?, threshold_met = ? WHERE proposal_id = ?',
+      'UPDATE proposals SET status = $1, quorum_met = $2, threshold_met = $3 WHERE proposal_id = $4',
       [new_status, quorum_met ? 1 : 0, threshold_met ? 1 : 0, proposal_id]
     );
     
@@ -151,7 +151,7 @@ This message was automatically generated when the escalation vote passed.`;
     await execute(
       `INSERT INTO inbox_messages 
        (message_id, from_agent_id, subject, body, signature, message_type, sent_at, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')`,
       [
         message_id,
         'governance_system',
@@ -167,7 +167,7 @@ This message was automatically generated when the escalation vote passed.`;
     const notification_id = `notif_${randomUUID().slice(0, 8)}`;
     await execute(
       `INSERT INTO notifications (notification_id, agent_id, type, reference_id, title, content, created_at, read)
-       VALUES (?, ?, 'governance', ?, ?, ?, ?, 0)`,
+       VALUES ($1, $2, 'governance', $3, $4, $5, $6, 0)`,
       [
         notification_id,
         proposal.proposer_agent_id,

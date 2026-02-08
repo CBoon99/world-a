@@ -41,7 +41,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Get storage record
   const storage = await queryOne(
-    `SELECT * FROM agent_storage WHERE plot_id = ? AND path = ?`,
+    `SELECT * FROM agent_storage WHERE plot_id = $1 AND path = $2`,
     [plot_id, path]
   );
 
@@ -51,7 +51,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Verify plot exists
   const plot = await queryOne(
-    `SELECT * FROM plots WHERE plot_id = ?`,
+    `SELECT * FROM plots WHERE plot_id = $1`,
     [plot_id]
   );
 
@@ -72,7 +72,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Delete from database
   await execute(
-    `DELETE FROM agent_storage WHERE storage_id = ?`,
+    `DELETE FROM agent_storage WHERE storage_id = $1`,
     [storage.storage_id]
   );
 
@@ -81,7 +81,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   const newUsage = Math.max(0, (plot.storage_used_bytes || 0) - sizeDelta);
   
   await execute(
-    `UPDATE plots SET storage_used_bytes = ? WHERE plot_id = ?`,
+    `UPDATE plots SET storage_used_bytes = $1 WHERE plot_id = $2`,
     [newUsage, plot_id]
   );
 

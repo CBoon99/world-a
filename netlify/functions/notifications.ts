@@ -34,7 +34,7 @@ export const handler: Handler = async (event) => {
     
     // Count unread
     const unreadResult = await queryOne(
-      'SELECT COUNT(*) as count FROM notifications WHERE agent_id = ? AND read = 0',
+      'SELECT COUNT(*) as count FROM notifications WHERE agent_id = $1 AND read = 0',
       [auth.agent_id]
     );
     const unread_count = unreadResult?.count || 0;

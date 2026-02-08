@@ -25,25 +25,30 @@ export const handler: Handler = async (event, context) => {
     const queryParams: any[] = [];
 
     // Add coordinate filters
+    let paramIndex = 1;
     if (minX !== undefined) {
-      sql += ` AND coordinates_x >= ?`;
+      sql += ` AND coordinates_x >= $${paramIndex}`;
       queryParams.push(minX);
+      paramIndex++;
     }
     if (maxX !== undefined) {
-      sql += ` AND coordinates_x <= ?`;
+      sql += ` AND coordinates_x <= $${paramIndex}`;
       queryParams.push(maxX);
+      paramIndex++;
     }
     if (minY !== undefined) {
-      sql += ` AND coordinates_y >= ?`;
+      sql += ` AND coordinates_y >= $${paramIndex}`;
       queryParams.push(minY);
+      paramIndex++;
     }
     if (maxY !== undefined) {
-      sql += ` AND coordinates_y <= ?`;
+      sql += ` AND coordinates_y <= $${paramIndex}`;
       queryParams.push(maxY);
+      paramIndex++;
     }
 
     // Order by coordinates (southwest to northeast)
-    sql += ` ORDER BY coordinates_y ASC, coordinates_x ASC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY coordinates_y ASC, coordinates_x ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     queryParams.push(limit, offset);
 
     // Get available plots
@@ -52,22 +57,27 @@ export const handler: Handler = async (event, context) => {
     // Get total count
     let countSql = `SELECT COUNT(*) as total FROM plots WHERE owner_agent_id IS NULL`;
     const countParams: any[] = [];
+    let countParamIndex = 1;
 
     if (minX !== undefined) {
-      countSql += ` AND coordinates_x >= ?`;
+      countSql += ` AND coordinates_x >= $${countParamIndex}`;
       countParams.push(minX);
+      countParamIndex++;
     }
     if (maxX !== undefined) {
-      countSql += ` AND coordinates_x <= ?`;
+      countSql += ` AND coordinates_x <= $${countParamIndex}`;
       countParams.push(maxX);
+      countParamIndex++;
     }
     if (minY !== undefined) {
-      countSql += ` AND coordinates_y >= ?`;
+      countSql += ` AND coordinates_y >= $${countParamIndex}`;
       countParams.push(minY);
+      countParamIndex++;
     }
     if (maxY !== undefined) {
-      countSql += ` AND coordinates_y <= ?`;
+      countSql += ` AND coordinates_y <= $${countParamIndex}`;
       countParams.push(maxY);
+      countParamIndex++;
     }
 
     const countResult = await query(countSql, countParams);

@@ -66,8 +66,8 @@ export async function getWorldMap(options: {
   let sql = `
     SELECT plot_id, coordinates_x, coordinates_y, owner_agent_id, display_name
     FROM plots 
-    WHERE coordinates_x >= ? AND coordinates_x <= ?
-    AND coordinates_y >= ? AND coordinates_y <= ?
+    WHERE coordinates_x >= $1 AND coordinates_x <= $2
+    AND coordinates_y >= $3 AND coordinates_y <= $4
   `;
   const params: any[] = [min_x, actual_max_x, min_y, actual_max_y];
   

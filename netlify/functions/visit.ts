@@ -34,7 +34,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Check for existing pending request
   const existing = await queryOne(
-    'SELECT * FROM visits WHERE visitor_agent_id = ? AND plot_id = ? AND status = ?',
+    'SELECT * FROM visits WHERE visitor_agent_id = $1 AND plot_id = $2 AND status = $3',
     [agent_id, plot_id, 'pending']
   );
 

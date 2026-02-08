@@ -23,7 +23,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get message
     const message = await queryOne(
-      'SELECT * FROM messages WHERE message_id = ?',
+      'SELECT * FROM messages WHERE message_id = $1',
       [message_id]
     );
 
@@ -61,13 +61,13 @@ export const handler: Handler = async (event, context) => {
 
     // Soft delete
     await execute(
-      `UPDATE messages SET ${updateField} = 1 WHERE message_id = ?`,
+      `UPDATE messages SET ${updateField} = 1 WHERE message_id = $1`,
       [message_id]
     );
 
     // Check if both deleted (can optionally hard delete here)
     const updated = await queryOne(
-      'SELECT * FROM messages WHERE message_id = ?',
+      'SELECT * FROM messages WHERE message_id = $1',
       [message_id]
     );
 

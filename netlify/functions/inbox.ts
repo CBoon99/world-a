@@ -58,7 +58,7 @@ export const handler: Handler = async (event) => {
     
     // Check if Steward
     const steward = await queryOne(
-      'SELECT * FROM stewards WHERE agent_id = ? AND status = ?',
+      'SELECT * FROM stewards WHERE agent_id = $1 AND status = $2',
       [auth.agent_id, 'active']
     );
     

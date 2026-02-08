@@ -32,7 +32,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Get storage record
   const storage = await queryOne(
-    `SELECT * FROM agent_storage WHERE plot_id = ? AND path = ?`,
+    `SELECT * FROM agent_storage WHERE plot_id = $1 AND path = $2`,
     [plot_id, path]
   );
 

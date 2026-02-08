@@ -25,7 +25,7 @@ export const handler: Handler = async (event, context) => {
     // Transition if needed
     await transitionProposalStatus(proposal_id);
 
-    const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = ?', [proposal_id]);
+    const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = $1', [proposal_id]);
     if (!proposal) {
       return {
         statusCode: 404,

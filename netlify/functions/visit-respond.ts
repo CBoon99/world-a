@@ -34,7 +34,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get visit request
     const visit = await queryOne(
-      'SELECT * FROM visits WHERE visit_id = ?',
+      'SELECT * FROM visits WHERE visit_id = $1',
       [visit_id]
     );
 
@@ -48,7 +48,7 @@ export const handler: Handler = async (event, context) => {
 
     // Verify requester owns the plot
     const plot = await queryOne(
-      'SELECT * FROM plots WHERE plot_id = ?',
+      'SELECT * FROM plots WHERE plot_id = $1',
       [visit.plot_id]
     );
 
@@ -83,7 +83,7 @@ export const handler: Handler = async (event, context) => {
       await execute(
         `INSERT INTO pending_gratitude 
          (reference_id, from_agent_id, to_agent_id, action_type, action_completed_at, gratitude_due_by)
-         VALUES (?, ?, ?, 'visit_approved', ?, ?)`,
+         VALUES ($1, $2, $3, 'visit_approved', $4, $5)`,
         [visit_id, visit.visitor_agent_id, authReq.agent_id, now, calculateGratitudeDueBy(now)]
       );
     } else {
@@ -92,7 +92,7 @@ export const handler: Handler = async (event, context) => {
 
     // Update visit status
     await execute(
-      `UPDATE visits SET status = ?, responded_at = ?, expires_at = ? WHERE visit_id = ?`,
+      `UPDATE visits SET status = $1, responded_at = $2, expires_at = $3 WHERE visit_id = $4`,
       [newStatus, now, expires_at, visit_id]
     );
 

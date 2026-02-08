@@ -29,7 +29,7 @@ export async function checkPermission(
 
   // 1. Get plot ownership
   const plot = await queryOne(
-    `SELECT * FROM plots WHERE plot_id = ?`,
+    `SELECT * FROM plots WHERE plot_id = $1`,
     [plot_id]
   );
 
@@ -93,7 +93,7 @@ export async function checkPermission(
   // 7. Check path-specific permissions (if path provided)
   if (path) {
     const pathStorage = await queryOne(
-      `SELECT permissions FROM agent_storage WHERE plot_id = ? AND path = ?`,
+      `SELECT permissions FROM agent_storage WHERE plot_id = $1 AND path = $2`,
       [plot_id, path]
     );
 

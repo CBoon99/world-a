@@ -29,7 +29,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get plot
     const plot = await queryOne(
-      `SELECT * FROM plots WHERE plot_id = ?`,
+      `SELECT * FROM plots WHERE plot_id = $1`,
       [plot_id]
     );
 

@@ -19,12 +19,12 @@ export const ELECTION_CONFIG = {
  */
 export async function canNominate(agent_id: string, role: string): Promise<{ allowed: boolean; reason?: string }> {
   // Check if citizen
-  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = ?', [agent_id]);
+  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = $1', [agent_id]);
   if (!citizen) return { allowed: false, reason: 'not_a_citizen' };
   
   // Check consecutive terms (get most recent terms for this role)
   const recentTerms = await query(
-    'SELECT term_number FROM stewards WHERE agent_id = ? AND role = ? ORDER BY term_start DESC LIMIT ?',
+    'SELECT term_number FROM stewards WHERE agent_id = $1 AND role = $2 ORDER BY term_start DESC LIMIT $3',
     [agent_id, role, ELECTION_CONFIG.max_consecutive_terms]
   );
   
@@ -46,7 +46,7 @@ export async function canNominate(agent_id: string, role: string): Promise<{ all
  */
 export async function tallyElection(election_id: string): Promise<string | null> {
   const candidates = await query(
-    'SELECT * FROM election_candidates WHERE election_id = ? ORDER BY votes_received DESC',
+    'SELECT * FROM election_candidates WHERE election_id = $1 ORDER BY votes_received DESC',
     [election_id]
   );
   

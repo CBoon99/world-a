@@ -21,13 +21,13 @@ export async function getNeighborCoordinates(x: number, y: number): Promise<Arra
  * Get neighbor plots (adjacent owned plots)
  */
 export async function getNeighbors(plot_id: string): Promise<any[]> {
-  const plot = await queryOne('SELECT coordinates_x, coordinates_y FROM plots WHERE plot_id = ?', [plot_id]);
+  const plot = await queryOne('SELECT coordinates_x, coordinates_y FROM plots WHERE plot_id = $1', [plot_id]);
   if (!plot) return [];
   
   const coords = await getNeighborCoordinates(plot.coordinates_x, plot.coordinates_y);
   if (coords.length === 0) return [];
   
-  const placeholders = coords.map(() => '(coordinates_x = ? AND coordinates_y = ?)').join(' OR ');
+  const placeholders = coords.map((_, i) => `(coordinates_x = $${i * 2 + 1} AND coordinates_y = $${i * 2 + 2})`).join(' OR ');
   const values = coords.flatMap(c => [c.x, c.y]);
   
   return query(
@@ -41,7 +41,7 @@ export async function getNeighbors(plot_id: string): Promise<any[]> {
  * Check if agent can visit a plot
  */
 export async function canVisit(visitor_id: string, plot_id: string): Promise<{ allowed: boolean; reason?: string }> {
-  const plot = await queryOne('SELECT * FROM plots WHERE plot_id = ?', [plot_id]);
+  const plot = await queryOne('SELECT * FROM plots WHERE plot_id = $1', [plot_id]);
   if (!plot) return { allowed: false, reason: 'plot_not_found' };
   if (!plot.owner_agent_id) return { allowed: false, reason: 'plot_unclaimed' };
   if (plot.owner_agent_id === visitor_id) return { allowed: true, reason: 'owner' };
@@ -72,7 +72,7 @@ export async function canVisit(visitor_id: string, plot_id: string): Promise<{ a
   
   // Check for approved visit request
   const visit = await queryOne(
-    'SELECT * FROM visits WHERE visitor_agent_id = ? AND plot_id = ? AND status = ? AND (expires_at IS NULL OR expires_at > ?)',
+    'SELECT * FROM visits WHERE visitor_agent_id = $1 AND plot_id = $2 AND status = $3 AND (expires_at IS NULL OR expires_at > $4)',
     [visitor_id, plot_id, 'approved', new Date().toISOString()]
   );
   

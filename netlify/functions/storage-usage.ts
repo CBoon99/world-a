@@ -22,7 +22,7 @@ export const handler: Handler = async (event, context) => {
 
     // Verify plot exists and agent has access
     const plot = await queryOne(
-      `SELECT * FROM plots WHERE plot_id = ?`,
+      `SELECT * FROM plots WHERE plot_id = $1`,
       [plot_id]
     );
 
@@ -44,7 +44,7 @@ export const handler: Handler = async (event, context) => {
         SUM(content_size_bytes) as total_bytes,
         COUNT(DISTINCT SUBSTR(path, 1, INSTR(path || '/', '/') - 1)) as top_level_dirs
        FROM agent_storage 
-       WHERE plot_id = ?`,
+       WHERE plot_id = $1`,
       [plot_id]
     );
 
@@ -76,7 +76,7 @@ export const handler: Handler = async (event, context) => {
           COUNT(*) as count,
           SUM(content_size_bytes) as total_bytes
          FROM agent_storage 
-         WHERE plot_id = ?
+         WHERE plot_id = $1
          GROUP BY content_type
          ORDER BY total_bytes DESC`,
         [plot_id]
@@ -86,7 +86,7 @@ export const handler: Handler = async (event, context) => {
       const largestFiles = await query(
         `SELECT path, content_size_bytes, content_type
          FROM agent_storage 
-         WHERE plot_id = ?
+         WHERE plot_id = $1
          ORDER BY content_size_bytes DESC
          LIMIT 10`,
         [plot_id]

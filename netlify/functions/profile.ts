@@ -13,7 +13,7 @@ export const handler: Handler = async (event, context) => {
 
     // Check citizenship
     const citizen = await queryOne(
-      `SELECT * FROM citizens WHERE agent_id = ?`,
+      `SELECT * FROM citizens WHERE agent_id = $1`,
       [agent_id]
     );
 
@@ -71,7 +71,7 @@ export const handler: Handler = async (event, context) => {
 
       // Update profile
       await execute(
-        `UPDATE citizens SET profile = ? WHERE agent_id = ?`,
+        `UPDATE citizens SET profile = $1 WHERE agent_id = $2`,
         [JSON.stringify(newProfile), agent_id]
       );
 

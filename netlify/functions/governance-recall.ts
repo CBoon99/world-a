@@ -16,14 +16,14 @@ export const handler = authenticatedHandler(async (req, event) => {
   }
 
   // Verify citizen
-  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = ?', [agent_id]);
+  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = $1', [agent_id]);
   if (!citizen) {
     return errorResponse('permission_denied', 'Must be citizen to initiate recall', request_id);
   }
 
   // Get steward
   const steward = await queryOne(
-    'SELECT * FROM stewards WHERE steward_id = ? AND status = ?',
+    'SELECT * FROM stewards WHERE steward_id = $1 AND status = $2',
     [steward_id, 'active']
   );
 
@@ -33,7 +33,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Check if recall proposal already exists for this steward
   const existing = await queryOne(
-    "SELECT * FROM proposals WHERE proposer_agent_id = ? AND type = 'recall' AND status IN ('discussion', 'voting')",
+    "SELECT * FROM proposals WHERE proposer_agent_id = $1 AND type = 'recall' AND status IN ('discussion', 'voting')",
     [agent_id]
   );
 
@@ -58,7 +58,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   await execute(
     `INSERT INTO proposals 
      (proposal_id, type, title, body, proposer_agent_id, proposer_certificate_ref, submitted_at, discussion_ends_at, voting_ends_at, total_eligible)
-     VALUES (?, 'recall', ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES ($1, 'recall', $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
       proposal_id,
       `Recall Steward: ${steward.role}`,

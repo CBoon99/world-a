@@ -24,7 +24,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get message
     const message = await queryOne(
-      'SELECT * FROM messages WHERE message_id = ?',
+      'SELECT * FROM messages WHERE message_id = $1',
       [message_id]
     );
 
@@ -62,7 +62,7 @@ export const handler: Handler = async (event, context) => {
 
     // Mark as read
     await execute(
-      'UPDATE messages SET read_at = ? WHERE message_id = ?',
+      'UPDATE messages SET read_at = $1 WHERE message_id = $2',
       [now, message_id]
     );
 
@@ -70,7 +70,7 @@ export const handler: Handler = async (event, context) => {
     await execute(
       `INSERT INTO pending_gratitude 
        (reference_id, from_agent_id, to_agent_id, action_type, action_completed_at, gratitude_due_by)
-       VALUES (?, ?, ?, 'message_received', ?, ?)`,
+       VALUES ($1, $2, $3, 'message_received', $4, $5)`,
       [message_id, message.to_agent_id, message.from_agent_id, now, calculateGratitudeDueBy(now)]
     );
 

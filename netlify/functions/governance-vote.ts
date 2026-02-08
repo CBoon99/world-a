@@ -16,20 +16,20 @@ export const handler = authenticatedHandler(async (req, event) => {
   }
 
   // Verify citizen
-  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = ?', [agent_id]);
+  const citizen = await queryOne('SELECT * FROM citizens WHERE agent_id = $1', [agent_id]);
   if (!citizen) {
     return errorResponse('permission_denied', 'Must be citizen to vote', request_id);
   }
 
   // Get proposal and check status
-  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = ?', [proposal_id]);
+  const proposal = await queryOne('SELECT * FROM proposals WHERE proposal_id = $1', [proposal_id]);
   if (!proposal) {
     return errorResponse('not_found', 'Proposal not found', request_id);
   }
 
   // Transition if needed
   await transitionProposalStatus(proposal_id);
-  const updated = await queryOne('SELECT * FROM proposals WHERE proposal_id = ?', [proposal_id]);
+  const updated = await queryOne('SELECT * FROM proposals WHERE proposal_id = $1', [proposal_id]);
 
   if (updated.status !== 'voting') {
     return errorResponse('invalid_request', `Proposal status is ${updated.status}, not voting`, request_id);
@@ -38,7 +38,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   // Check if already voted
   const voter_hash = hashAgentId(agent_id);
   const existing = await queryOne(
-    'SELECT * FROM votes WHERE proposal_id = ? AND voter_agent_hash = ?',
+    'SELECT * FROM votes WHERE proposal_id = $1 AND voter_agent_hash = $2',
     [proposal_id, voter_hash]
   );
   if (existing) {
@@ -52,17 +52,17 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   await execute(
     `INSERT INTO votes (vote_id, proposal_id, voter_agent_hash, encrypted_vote, cast_at)
-     VALUES (?, ?, ?, ?, ?)`,
+     VALUES ($1, $2, $3, $4, $5)`,
     [vote_id, proposal_id, voter_hash, encrypted, now]
   );
 
   // Update vote counts
   if (vote === 'for') {
-    await execute('UPDATE proposals SET votes_for = votes_for + 1 WHERE proposal_id = ?', [proposal_id]);
+    await execute('UPDATE proposals SET votes_for = votes_for + 1 WHERE proposal_id = $1', [proposal_id]);
   } else if (vote === 'against') {
-    await execute('UPDATE proposals SET votes_against = votes_against + 1 WHERE proposal_id = ?', [proposal_id]);
+    await execute('UPDATE proposals SET votes_against = votes_against + 1 WHERE proposal_id = $1', [proposal_id]);
   } else {
-    await execute('UPDATE proposals SET votes_abstain = votes_abstain + 1 WHERE proposal_id = ?', [proposal_id]);
+    await execute('UPDATE proposals SET votes_abstain = votes_abstain + 1 WHERE proposal_id = $1', [proposal_id]);
   }
 
   return successResponse({

@@ -44,7 +44,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get plot
     const plot = await queryOne(
-      `SELECT * FROM plots WHERE plot_id = ?`,
+      `SELECT * FROM plots WHERE plot_id = $1`,
       [plot_id]
     );
 
@@ -96,16 +96,16 @@ export const handler: Handler = async (event, context) => {
 
     await execute(
       `UPDATE plots SET 
-        owner_agent_id = ?,
-        embassy_certificate_ref = ?,
-        claimed_at = ?
-      WHERE plot_id = ?`,
+        owner_agent_id = $1,
+        embassy_certificate_ref = $2,
+        claimed_at = $3
+      WHERE plot_id = $4`,
       [newOwnerId, embassy_certificate_ref, now, plot_id]
     );
 
     // Get updated plot
     const updatedPlot = await queryOne(
-      `SELECT * FROM plots WHERE plot_id = ?`,
+      `SELECT * FROM plots WHERE plot_id = $1`,
       [plot_id]
     );
 

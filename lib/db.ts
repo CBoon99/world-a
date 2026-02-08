@@ -16,10 +16,12 @@ export async function initDatabase(): Promise<void> {
   }
   
   initPromise = (async () => {
-    const dbUrl = process.env.DATABASE_URL;
+    // Netlify Neon integration provides NETLIFY_DATABASE_URL
+    // Fallback to DATABASE_URL for local development or custom setups
+    const dbUrl = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
     
     if (!dbUrl) {
-      throw new Error('DATABASE_URL environment variable required. Set it to your PostgreSQL connection string (e.g., postgresql://user:password@host.neon.tech/database)');
+      throw new Error('DATABASE_URL or NETLIFY_DATABASE_URL environment variable required. Set it to your PostgreSQL connection string (e.g., postgresql://user:password@host.neon.tech/database)');
     }
     
     if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {

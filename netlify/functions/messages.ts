@@ -20,12 +20,12 @@ export const handler: Handler = async (event, context) => {
     const queryParams: any[] = [];
 
     if (folder === 'sent') {
-      sql = `SELECT * FROM messages WHERE from_agent_id = ? AND deleted_by_sender = 0`;
-      countSql = `SELECT COUNT(*) as count FROM messages WHERE from_agent_id = ? AND deleted_by_sender = 0`;
+      sql = `SELECT * FROM messages WHERE from_agent_id = $1 AND deleted_by_sender = 0`;
+      countSql = `SELECT COUNT(*) as count FROM messages WHERE from_agent_id = $1 AND deleted_by_sender = 0`;
       queryParams.push(authReq.agent_id);
     } else {
-      sql = `SELECT * FROM messages WHERE to_agent_id = ? AND deleted_by_recipient = 0`;
-      countSql = `SELECT COUNT(*) as count FROM messages WHERE to_agent_id = ? AND deleted_by_recipient = 0`;
+      sql = `SELECT * FROM messages WHERE to_agent_id = $1 AND deleted_by_recipient = 0`;
+      countSql = `SELECT COUNT(*) as count FROM messages WHERE to_agent_id = $1 AND deleted_by_recipient = 0`;
       queryParams.push(authReq.agent_id);
 
       if (unread_only) {
@@ -34,7 +34,7 @@ export const handler: Handler = async (event, context) => {
       }
     }
 
-    sql += ` ORDER BY sent_at DESC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY sent_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
 
     const countResult = await queryOne(countSql, queryParams);
     queryParams.push(limit, offset);

@@ -44,7 +44,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   if (listPath === '/') {
     items = await query(
       `SELECT * FROM agent_storage 
-       WHERE plot_id = ? 
+       WHERE plot_id = $1 
        AND path LIKE '/%' 
        AND path NOT LIKE '/%/%'
        ORDER BY path`,
@@ -56,9 +56,9 @@ export const handler = authenticatedHandler(async (req, event) => {
     const childPath = `${listPath}/`;
     items = await query(
       `SELECT * FROM agent_storage 
-       WHERE plot_id = ? 
-       AND path LIKE ? 
-       AND path NOT LIKE ?
+       WHERE plot_id = $1 
+       AND path LIKE $2 
+       AND path NOT LIKE $3
        ORDER BY path`,
       [plot_id, `${childPath}%`, `${childPath}%/%`]
     );
@@ -98,7 +98,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   if (listPath === '/') {
     const allItems = await query(
       `SELECT DISTINCT path FROM agent_storage 
-       WHERE plot_id = ? 
+       WHERE plot_id = $1 
        AND path LIKE '/%/%'
        ORDER BY path`,
       [plot_id]
@@ -119,8 +119,8 @@ export const handler = authenticatedHandler(async (req, event) => {
   } else {
     const allItems = await query(
       `SELECT DISTINCT path FROM agent_storage 
-       WHERE plot_id = ? 
-       AND path LIKE ?
+       WHERE plot_id = $1 
+       AND path LIKE $2
        ORDER BY path`,
       [plot_id, `${listPath}/%`]
     );

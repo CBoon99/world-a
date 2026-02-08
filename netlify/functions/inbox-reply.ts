@@ -33,7 +33,7 @@ export const handler: Handler = async (event) => {
     
     // Get original message
     const original = await queryOne(
-      'SELECT * FROM inbox_messages WHERE message_id = ?',
+      'SELECT * FROM inbox_messages WHERE message_id = $1',
       [message_id]
     );
     if (!original) {

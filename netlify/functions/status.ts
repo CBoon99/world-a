@@ -13,7 +13,7 @@ export const handler: Handler = async (event, context) => {
 
     // Check citizenship status
     const citizen = await queryOne(
-      `SELECT * FROM citizens WHERE agent_id = ?`,
+      `SELECT * FROM citizens WHERE agent_id = $1`,
       [agent_id]
     );
 
@@ -45,7 +45,7 @@ export const handler: Handler = async (event, context) => {
     const plots = await query(
       `SELECT plot_id, coordinates_x, coordinates_y, storage_allocation_gb, storage_used_bytes, claimed_at
        FROM plots 
-       WHERE owner_agent_id = ?`,
+       WHERE owner_agent_id = $1`,
       [agent_id]
     );
 

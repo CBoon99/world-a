@@ -42,7 +42,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Verify plot exists
   const plot = await queryOne(
-    `SELECT * FROM plots WHERE plot_id = ?`,
+    `SELECT * FROM plots WHERE plot_id = $1`,
     [plot_id]
   );
 
@@ -68,14 +68,14 @@ export const handler = authenticatedHandler(async (req, event) => {
   // Get current usage for this agent across all their plots
   // We need to get all plots owned by this agent first
   const agentPlots = await query(
-    `SELECT plot_id FROM plots WHERE owner_agent_id = ?`,
+    `SELECT plot_id FROM plots WHERE owner_agent_id = $1`,
     [agent_id]
   );
   
   let usage: any = { bytes_used: 0 };
   if (agentPlots && agentPlots.length > 0) {
     const plotIds = agentPlots.map((p: any) => p.plot_id);
-    const placeholders = plotIds.map(() => '?').join(',');
+    const placeholders = plotIds.map((_, i) => `$${i + 1}`).join(',');
     usage = await queryOne(
       `SELECT COALESCE(SUM(content_size_bytes), 0) as bytes_used 
        FROM agent_storage WHERE plot_id IN (${placeholders})`,
@@ -87,7 +87,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   
   // Check if updating existing file
   const existing = await queryOne(
-    `SELECT * FROM agent_storage WHERE plot_id = ? AND path = ?`,
+    `SELECT * FROM agent_storage WHERE plot_id = $1 AND path = $2`,
     [plot_id, path]
   );
   
@@ -137,13 +137,13 @@ export const handler = authenticatedHandler(async (req, event) => {
     // Update existing
     await execute(
       `UPDATE agent_storage SET
-        content_type = ?,
-        content_hash = ?,
-        content_size_bytes = ?,
-        content_ref = ?,
-        permissions = ?,
-        updated_at = ?
-      WHERE storage_id = ?`,
+        content_type = $1,
+        content_hash = $2,
+        content_size_bytes = $3,
+        content_ref = $4,
+        permissions = $5,
+        updated_at = $6
+      WHERE storage_id = $7`,
       [
         content_type || 'application/octet-stream',
         content_hash,
@@ -161,7 +161,7 @@ export const handler = authenticatedHandler(async (req, event) => {
         storage_id, plot_id, path,
         content_type, content_hash, content_size_bytes, content_ref,
         permissions, created_at, updated_at, created_by_agent_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         storage_id,
         plot_id,
@@ -180,7 +180,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   // Update plot storage usage (legacy tracking)
   await execute(
-    `UPDATE plots SET storage_used_bytes = ? WHERE plot_id = ?`,
+    `UPDATE plots SET storage_used_bytes = $1 WHERE plot_id = $2`,
     [currentPlotUsage + sizeDelta, plot_id]
   );
 

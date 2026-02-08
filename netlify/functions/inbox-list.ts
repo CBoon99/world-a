@@ -26,14 +26,14 @@ export const handler: Handler = async (event) => {
     
     const messages = await query(
       `SELECT * FROM inbox_messages 
-       WHERE status = ? 
+       WHERE status = $1 
        ORDER BY sent_at DESC 
-       LIMIT ? OFFSET ?`,
+       LIMIT $2 OFFSET $3`,
       [status, limit, offset]
     );
     
     const total = await queryOne(
-      'SELECT COUNT(*) as count FROM inbox_messages WHERE status = ?',
+      'SELECT COUNT(*) as count FROM inbox_messages WHERE status = $1',
       [status]
     );
     

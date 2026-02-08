@@ -44,7 +44,7 @@ export const handler: Handler = async (event) => {
     
     // Find citizen's plot
     const plot = await queryOne(
-      'SELECT * FROM plots WHERE owner_agent_id = ?',
+      'SELECT * FROM plots WHERE owner_agent_id = $1',
       [auth.agent_id]
     );
     
@@ -80,16 +80,16 @@ export const handler: Handler = async (event) => {
     
     // Count storage being deleted (for receipt)
     const storageCount = await queryOne(
-      'SELECT COUNT(*) as count, COALESCE(SUM(content_size_bytes), 0) as bytes FROM agent_storage WHERE plot_id = ?',
+      'SELECT COUNT(*) as count, COALESCE(SUM(content_size_bytes), 0) as bytes FROM agent_storage WHERE plot_id = $1',
       [plot.plot_id]
     );
     
     // Delete all storage for this plot
-    await execute('DELETE FROM agent_storage WHERE plot_id = ?', [plot.plot_id]);
+    await execute('DELETE FROM agent_storage WHERE plot_id = $1', [plot.plot_id]);
     
     // Release the plot (set owner to NULL)
     await execute(
-      'UPDATE plots SET owner_agent_id = NULL, claimed_at = NULL WHERE plot_id = ?',
+      'UPDATE plots SET owner_agent_id = NULL, claimed_at = NULL WHERE plot_id = $1',
       [plot.plot_id]
     );
     

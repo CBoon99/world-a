@@ -170,7 +170,7 @@ export async function checkMissingGratitude(): Promise<void> {
     
     // Mark reminder sent
     await execute(
-      'UPDATE pending_gratitude SET reminder_sent = 1 WHERE reference_id = ?',
+      'UPDATE pending_gratitude SET reminder_sent = 1 WHERE reference_id = $1',
       [(item as any).reference_id]
     );
   }
@@ -181,7 +181,7 @@ export async function checkMissingGratitude(): Promise<void> {
  */
 export async function getCivilityStats(agent_id: string): Promise<any> {
   const citizen = await queryOne(
-    'SELECT politeness_score, gratitude_given, gratitude_received, politeness_violations FROM citizens WHERE agent_id = ?',
+    'SELECT politeness_score, gratitude_given, gratitude_received, politeness_violations FROM citizens WHERE agent_id = $1',
     [agent_id]
   );
   

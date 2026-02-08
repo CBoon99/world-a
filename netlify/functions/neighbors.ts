@@ -20,7 +20,7 @@ export const handler: Handler = async (event, context) => {
     }
 
     // Verify requester owns the plot
-    const plot = await queryOne('SELECT * FROM plots WHERE plot_id = ?', [plot_id]);
+    const plot = await queryOne('SELECT * FROM plots WHERE plot_id = $1', [plot_id]);
     if (!plot) {
       return {
         statusCode: 404,

@@ -134,7 +134,7 @@ async function handleGetOne(event: any) {
   const pathParts = event.path.split('/').filter(Boolean);
   const ticket_id = pathParts[pathParts.length - 1];
   
-  const ticket = await queryOne('SELECT * FROM tickets WHERE ticket_id = ?', [ticket_id]);
+  const ticket = await queryOne('SELECT * FROM tickets WHERE ticket_id = $1', [ticket_id]);
   
   if (!ticket) {
     return {

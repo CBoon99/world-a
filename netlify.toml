@@ -402,4 +402,27 @@
   to = "/.netlify/functions/whoami"
   status = 200
 
+# Agent Discovery - MUST be served as static files, never hijacked
+# These paths are critical for agent discovery and must return correct content-type
+[[redirects]]
+  from = "/.well-known/world-a.json"
+  to = "/.well-known/world-a.json"
+  status = 200
+  force = true
+  headers = {Content-Type = "application/json", Cache-Control = "public, max-age=3600"}
+
+[[redirects]]
+  from = "/agent.txt"
+  to = "/agent.txt"
+  status = 200
+  force = true
+  headers = {Content-Type = "text/plain; charset=utf-8", Cache-Control = "public, max-age=3600"}
+
+[[redirects]]
+  from = "/for-agents"
+  to = "/for-agents.html"
+  status = 200
+  force = true
+  headers = {Cache-Control = "public, max-age=3600"}
+
 

@@ -18,7 +18,7 @@ export async function authenticateAdmin(event: any): Promise<{ ok: boolean; emai
     const now = new Date().toISOString();
     
     const session = await queryOne(
-      `SELECT * FROM admin_sessions WHERE session_id = ? AND expires_at > ?`,
+      `SELECT * FROM admin_sessions WHERE session_id = $1 AND expires_at > $2`,
       [sessionHash, now]
     );
     

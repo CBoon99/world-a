@@ -23,7 +23,7 @@ export const handler: Handler = async (event, context) => {
 
     // Get plot
     const plot = await queryOne(
-      `SELECT * FROM plots WHERE plot_id = ?`,
+      `SELECT * FROM plots WHERE plot_id = $1`,
       [plot_id]
     );
 
@@ -100,7 +100,7 @@ export const handler: Handler = async (event, context) => {
 
       // Update plot permissions
       await execute(
-        `UPDATE plots SET permissions = ? WHERE plot_id = ?`,
+        `UPDATE plots SET permissions = $1 WHERE plot_id = $2`,
         [JSON.stringify(permissionsToSave), plot_id]
       );
 

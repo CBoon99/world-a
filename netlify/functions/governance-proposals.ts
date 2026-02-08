@@ -19,22 +19,25 @@ export const handler: Handler = async (event, context) => {
     let sql = 'SELECT * FROM proposals WHERE 1=1';
     const queryParams: any[] = [];
 
+    let paramIndex = 1;
     if (status && status !== 'all') {
       if (status === 'active') {
         sql += ` AND status IN ('discussion', 'voting')`;
       } else {
-        sql += ` AND status = ?`;
+        sql += ` AND status = $${paramIndex}`;
         queryParams.push(status);
+        paramIndex++;
       }
     }
 
     if (type) {
-      sql += ` AND type = ?`;
+      sql += ` AND type = $${paramIndex}`;
       queryParams.push(type);
+      paramIndex++;
     }
 
     const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as count');
-    sql += ` ORDER BY submitted_at DESC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY submitted_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     queryParams.push(limit, offset);
 
     const proposals = await query(sql, queryParams);

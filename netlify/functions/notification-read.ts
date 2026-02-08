@@ -36,7 +36,7 @@ export const handler: Handler = async (event) => {
     
     // Verify notification belongs to authenticated agent
     const notification = await queryOne(
-      'SELECT * FROM notifications WHERE notification_id = ? AND agent_id = ?',
+      'SELECT * FROM notifications WHERE notification_id = $1 AND agent_id = $2',
       [notification_id, auth.agent_id]
     );
     
@@ -50,7 +50,7 @@ export const handler: Handler = async (event) => {
     
     // Mark as read
     await execute(
-      'UPDATE notifications SET read = 1 WHERE notification_id = ?',
+      'UPDATE notifications SET read = 1 WHERE notification_id = $1',
       [notification_id]
     );
     

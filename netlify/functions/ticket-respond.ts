@@ -33,7 +33,7 @@ export const handler: Handler = async (event) => {
     }
     
     // Get ticket
-    const ticket = await queryOne('SELECT * FROM tickets WHERE ticket_id = ?', [ticket_id]);
+    const ticket = await queryOne('SELECT * FROM tickets WHERE ticket_id = $1', [ticket_id]);
     if (!ticket) {
       return {
         statusCode: 404,
@@ -57,7 +57,7 @@ export const handler: Handler = async (event) => {
     const now = new Date().toISOString();
     
     await execute(
-      `UPDATE tickets SET status = ?, response = ?, response_at = ?, updated_at = ? WHERE ticket_id = ?`,
+      `UPDATE tickets SET status = $1, response = $2, response_at = $3, updated_at = $4 WHERE ticket_id = $5`,
       [status, response || null, response ? now : null, now, ticket_id]
     );
     

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPC Templates — World-A</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f7fafc 0%, #ebf8ff 100%);
+            min-height: 100vh;
+        }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 0.5rem; }
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .template-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+        .template-card:hover {
+            border-color: #4299e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .template-card h2 {
+            color: #1a365d;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        .template-card p {
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+        .template-card ul {
+            list-style: none;
+            margin: 1rem 0;
+            padding: 0;
+        }
+        .template-card li {
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        .template-card li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #4299e1;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #4299e1;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+        }
+        a { color: #4299e1; }
+    </style>
+</head>
+<body>
+    <h1>📚 SPC Templates</h1>
+    <p>Start from a proven template. Click "Use this template" to pre-fill the designer.</p>
+    
+    <div class="template-grid">
+        <div class="template-card">
+            <h2>Research DAO</h2>
+            <p>Coordinate open research projects with transparent funding and merit-based decisions.</p>
+            <ul>
+                <li><strong>Purpose:</strong> Open research coordination</li>
+                <li><strong>Governance:</strong> Proposal-based, expert-weighted voting</li>
+                <li><strong>Ownership:</strong> Shared IP, research data, publications</li>
+                <li><strong>Onboarding:</strong> Application + peer review</li>
+            </ul>
+            <a href="/?template=research" class="btn">Use this template</a>
+        </div>
+        
+        <div class="template-card">
+            <h2>Artist Collective</h2>
+            <p>Support independent artists with shared resources, studio space, and mutual promotion.</p>
+            <ul>
+                <li><strong>Purpose:</strong> Artist support & resource sharing</li>
+                <li><strong>Governance:</strong> Consensus on new members, democratic for operations</li>
+                <li><strong>Ownership:</strong> Studio space, equipment, artwork rights</li>
+                <li><strong>Onboarding:</strong> Portfolio review + existing member approval</li>
+            </ul>
+            <a href="/?template=artist" class="btn">Use this template</a>
+        </div>
+        
+        <div class="template-card">
+            <h2>Remote Work Guild</h2>
+            <p>Mutual support network for remote workers with shared benefits and job matching.</p>
+            <ul>
+                <li><strong>Purpose:</strong> Remote worker support & benefits</li>
+                <li><strong>Governance:</strong> Member-driven, reputation-weighted</li>
+                <li><strong>Ownership:</strong> Health insurance pool, training resources</li>
+                <li><strong>Onboarding:</strong> Application + verification</li>
+            </ul>
+            <a href="/?template=work" class="btn">Use this template</a>
+        </div>
+        
+        <div class="template-card">
+            <h2>Neighborhood Association</h2>
+            <p>Local governance and shared amenities for residents and property owners.</p>
+            <ul>
+                <li><strong>Purpose:</strong> Local governance & community</li>
+                <li><strong>Governance:</strong> Direct democracy, transparent budgeting</li>
+                <li><strong>Ownership:</strong> Community gardens, meeting spaces</li>
+                <li><strong>Onboarding:</strong> Residence verification</li>
+            </ul>
+            <a href="/?template=community" class="btn">Use this template</a>
+        </div>
+        
+        <div class="template-card">
+            <h2>Ethical Tech Cooperative</h2>
+            <p>Build technology aligned with values, with worker ownership and ethical oversight.</p>
+            <ul>
+                <li><strong>Purpose:</strong> Values-aligned technology</li>
+                <li><strong>Governance:</strong> Worker ownership, ethical review board</li>
+                <li><strong>Ownership:</strong> Code, patents, user data (with consent)</li>
+                <li><strong>Onboarding:</strong> Skills assessment + values alignment</li>
+            </ul>
+            <a href="/?template=tech" class="btn">Use this template</a>
+        </div>
+        
+        <div class="template-card">
+            <h2>Activist Network</h2>
+            <p>Coordinate advocacy efforts with shared resources and transparent decision-making.</p>
+            <ul>
+                <li><strong>Purpose:</strong> Coordinated advocacy & action</li>
+                <li><strong>Governance:</strong> Consensus for major decisions, working groups for execution</li>
+                <li><strong>Ownership:</strong> Campaign materials, donor lists (with consent), resources</li>
+                <li><strong>Onboarding:</strong> Commitment to shared values</li>
+            </ul>
+            <a href="/?template=activist" class="btn">Use this template</a>
+        </div>
+    </div>
+    
+    <footer>
+        <p><a href="/">← Return to World-A</a></p>
+    </footer>
+    
+    <script>
+        // Handle template prefill via URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const template = urlParams.get('template');
+        
+        if (template) {
+            // Redirect to homepage with template prefill
+            window.location.href = `/?template=${template}`;
+        }
+    </script>
+</body>
+</html>
