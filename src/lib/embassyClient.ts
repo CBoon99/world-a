@@ -8,6 +8,8 @@ type Err = {
   message?: string; 
   code?: string; 
   reason?: string;
+  type?: string;          // For Embassy verification responses
+  reason_code?: string;  // For Embassy gate responses
 };
 export type ApiResult<T> = Ok<T> | Err;
 

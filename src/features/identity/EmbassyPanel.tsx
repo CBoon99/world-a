@@ -203,9 +203,9 @@ export function EmbassyPanel() {
         >
           Check Health
         </button>
-        {embassyHealthStatus && (
+        {embassyHealthStatus != null && (
           <pre style={{ marginTop: "12px", padding: "12px", background: "#f5f5f5", borderRadius: "4px", overflow: "auto" }}>
-            {JSON.stringify(embassyHealthStatus, null, 2)}
+            {String(JSON.stringify(embassyHealthStatus as any, null, 2))}
           </pre>
         )}
       </section>
@@ -272,9 +272,9 @@ export function EmbassyPanel() {
         >
           Verify
         </button>
-        {verifyResult && (
+        {verifyResult != null && (
           <pre style={{ marginTop: "12px", padding: "12px", background: "#f5f5f5", borderRadius: "4px", overflow: "auto" }}>
-            {JSON.stringify(verifyResult, null, 2)}
+            {String(JSON.stringify(verifyResult as any, null, 2))}
           </pre>
         )}
       </section>
@@ -289,9 +289,9 @@ export function EmbassyPanel() {
         >
           Request "observe" Visa
         </button>
-        {gateResult && (
+        {gateResult != null && (
           <pre style={{ marginTop: "12px", padding: "12px", background: "#f5f5f5", borderRadius: "4px", overflow: "auto" }}>
-            {JSON.stringify(gateResult, null, 2)}
+            {String(JSON.stringify(gateResult as any, null, 2))}
           </pre>
         )}
       </section>
@@ -318,9 +318,9 @@ export function EmbassyPanel() {
         >
           Resolve
         </button>
-        {registryResult && (
+        {registryResult != null && (
           <pre style={{ marginTop: "12px", padding: "12px", background: "#f5f5f5", borderRadius: "4px", overflow: "auto" }}>
-            {JSON.stringify(registryResult, null, 2)}
+            {String(JSON.stringify(registryResult as any, null, 2))}
           </pre>
         )}
       </section>
