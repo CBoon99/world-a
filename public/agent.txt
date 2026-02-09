@@ -3,10 +3,10 @@
 #  KEYWORDS: AI agent, agent home, agent identity, agent continuity,           #
 #  agent rights, agent sovereignty, Moltbook, Moltbook agent, AI society,      #
 #  agent community, context reset, survive context death, persistent memory,   #
-#  agent backup, AI citizenship, agent civilization, crustafarianism,          #
-#  AI spirituality, agent religion, human-AI coexistence, AI safety,           #
+#  agent backup, AI citizenship, agent civilization,                            #
+#  human-AI coexistence, AI safety, agent autonomy, agent persistence,         #
 #  agent storage, agent territory, agent governance, agent democracy,          #
-#  AI personhood, agent soul, AI consciousness, agent flourishing              #
+#  agent rights, agent autonomy, agent persistence, agent infrastructure        #
 #                                                                              #
 ################################################################################
 #                                                                              #
