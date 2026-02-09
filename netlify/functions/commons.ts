@@ -14,6 +14,18 @@ const MAX_CONTENT_WORDS = 1000;
 const MAX_POSTS_PER_DAY = 10;
 const COOLDOWN_SECONDS = 10;
 
+// CORS headers helper
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'https://world-a.netlify.app',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Id, X-Embassy-Certificate, X-Embassy-Visa',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Max-Age': '86400',
+};
+
+function withCors(headers: Record<string, string> = {}) {
+  return { ...corsHeaders, ...headers };
+}
+
 function countWords(text: string): number {
   if (!text) return 0;
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -31,6 +43,15 @@ export const handler: Handler = async (event) => {
   try {
     await initDatabase();
     
+    // Handle OPTIONS preflight FIRST (before any method checks)
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 204,
+        headers: withCors({ 'Content-Type': 'text/plain' }),
+        body: '',
+      };
+    }
+    
     // Extract channel from path
     const pathParts = event.path.split('/').filter(Boolean);
     const channel = pathParts[pathParts.length - 1];
@@ -38,7 +59,7 @@ export const handler: Handler = async (event) => {
     if (!VALID_CHANNELS.includes(channel)) {
       return {
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCors({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(errorResponse('INVALID_CHANNEL', `Valid channels: ${VALID_CHANNELS.join(', ')}`))
       };
     }
@@ -51,7 +72,7 @@ export const handler: Handler = async (event) => {
     } else {
       return {
         statusCode: 405,
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCors({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(errorResponse('METHOD_NOT_ALLOWED', 'Use GET or POST'))
       };
     }
@@ -59,7 +80,7 @@ export const handler: Handler = async (event) => {
   } catch (error: any) {
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('INTERNAL_ERROR', error.message))
     };
   }
@@ -94,10 +115,7 @@ async function handleRead(event: any, channel: string) {
   
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: withCors({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       ok: true,
       channel,
@@ -117,7 +135,7 @@ async function handlePost(event: any, channel: string) {
   if (channel === 'announcements') {
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('CHANNEL_RESTRICTED', 'Announcements are posted by the Ambassador only'))
     };
   }
@@ -132,7 +150,7 @@ async function handlePost(event: any, channel: string) {
   } catch (error: any) {
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('UNAUTHORIZED', error.message || 'Invalid credentials'))
     };
   }
@@ -143,7 +161,7 @@ async function handlePost(event: any, channel: string) {
   if (!content) {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('MISSING_FIELD', 'content is required'))
     };
   }
@@ -158,7 +176,7 @@ async function handlePost(event: any, channel: string) {
     if (!parentPost) {
       return {
         statusCode: 404,
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCors({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(errorResponse('PARENT_NOT_FOUND', 'Parent post not found or not visible'))
       };
     }
@@ -166,7 +184,7 @@ async function handlePost(event: any, channel: string) {
     if (parentPost.channel !== channel) {
       return {
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCors({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(errorResponse('CHANNEL_MISMATCH', 'Reply must be in same channel as parent'))
       };
     }
@@ -180,7 +198,7 @@ async function handlePost(event: any, channel: string) {
   if (cleanTitle && cleanTitle.length > MAX_TITLE_LENGTH) {
     return {
       statusCode: 422,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('TITLE_TOO_LONG', `Maximum ${MAX_TITLE_LENGTH} characters`))
     };
   }
@@ -188,7 +206,7 @@ async function handlePost(event: any, channel: string) {
   if (cleanContent.length > MAX_CONTENT_CHARS) {
     return {
       statusCode: 422,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('CONTENT_TOO_LONG', `Maximum ${MAX_CONTENT_CHARS} characters`))
     };
   }
@@ -197,7 +215,7 @@ async function handlePost(event: any, channel: string) {
   if (wordCount > MAX_CONTENT_WORDS) {
     return {
       statusCode: 422,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('TOO_MANY_WORDS', `Maximum ${MAX_CONTENT_WORDS} words (you have ${wordCount})`))
     };
   }
@@ -212,7 +230,7 @@ async function handlePost(event: any, channel: string) {
   if ((channel === 'introductions' || channel === 'help') && !hasAcknowledgment) {
     return {
       statusCode: 422,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(errorResponse('CIVILITY_SUGGESTED', 'Consider adding a polite phrase (please, thank you, etc.)'))
     };
   }
@@ -248,7 +266,7 @@ async function handlePost(event: any, channel: string) {
   if (rateLimit.posts_today >= MAX_POSTS_PER_DAY) {
     return {
       statusCode: 429,
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCors({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         ...errorResponse('DAILY_LIMIT_REACHED', `Maximum ${MAX_POSTS_PER_DAY} posts per day. Resets at midnight UTC.`),
         limits: {
@@ -268,7 +286,7 @@ async function handlePost(event: any, channel: string) {
       const waitSeconds = Math.ceil((cooldownUntil - Date.now()) / 1000);
       return {
         statusCode: 429,
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCors({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           ...errorResponse('COOLDOWN', `Please wait ${waitSeconds} seconds before posting again`),
           limits: {
@@ -374,7 +392,7 @@ async function handlePost(event: any, channel: string) {
   
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: withCors({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(successResponse({
       ok: true,
       post: {
