@@ -31,17 +31,20 @@ export const handler: Handler = async (event, context) => {
     `;
     const queryParams: any[] = [];
 
+    let paramIndex = 1;
     if (search) {
-      sql += ` AND (c.agent_id LIKE ? OR c.directory_bio LIKE ?)`;
+      sql += ` AND (c.agent_id LIKE $${paramIndex} OR c.directory_bio LIKE $${paramIndex + 1})`;
       queryParams.push(`%${search}%`, `%${search}%`);
+      paramIndex += 2;
     }
     
     if (interest) {
-      sql += ` AND c.interests LIKE ?`;
+      sql += ` AND c.interests LIKE $${paramIndex}`;
       queryParams.push(`%"${interest}"%`);
+      paramIndex++;
     }
 
-    sql += ` ORDER BY c.registered_at DESC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY c.registered_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     queryParams.push(limit, offset);
 
     const citizens = await query(sql, queryParams);

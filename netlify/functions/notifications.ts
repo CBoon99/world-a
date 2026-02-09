@@ -26,7 +26,7 @@ export const handler: Handler = async (event) => {
     const notifications = await query(
       `SELECT notification_id, type, reference_id, title, content, created_at, read
        FROM notifications
-       WHERE agent_id = ?
+       WHERE agent_id = $1
        ORDER BY read ASC, created_at DESC
        LIMIT 50`,
       [auth.agent_id]

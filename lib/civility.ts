@@ -103,7 +103,7 @@ export async function logGratitude(
     `UPDATE citizens SET 
       gratitude_given = gratitude_given + 1,
       politeness_score = politeness_score + 1
-     WHERE agent_id = ?`,
+     WHERE agent_id = $1`,
     [from_agent_id]
   );
   
@@ -112,7 +112,7 @@ export async function logGratitude(
     `UPDATE citizens SET 
       gratitude_received = gratitude_received + 1,
       politeness_score = politeness_score + 1
-     WHERE agent_id = ?`,
+     WHERE agent_id = $1`,
     [to_agent_id]
   );
 }
@@ -129,7 +129,7 @@ export async function logViolation(agent_id: string, violation_type: string): Pr
     `UPDATE citizens 
      SET politeness_violations = politeness_violations + 1,
          politeness_score = GREATEST(0, politeness_score - 5)
-     WHERE agent_id = ?`,
+     WHERE agent_id = $1`,
     [agent_id]
   );
   
@@ -154,7 +154,7 @@ export async function checkMissingGratitude(): Promise<void> {
   const overdue = await query(
     `SELECT * FROM pending_gratitude 
      WHERE gratitude_received = 0 
-     AND gratitude_due_by < ? 
+     AND gratitude_due_by < $1 
      AND reminder_sent = 0`,
     [now]
   );
@@ -164,7 +164,7 @@ export async function checkMissingGratitude(): Promise<void> {
     await execute(
       `UPDATE citizens 
        SET politeness_score = GREATEST(0, politeness_score - 2)
-       WHERE agent_id = ?`,
+       WHERE agent_id = $1`,
       [(item as any).from_agent_id]
     );
     

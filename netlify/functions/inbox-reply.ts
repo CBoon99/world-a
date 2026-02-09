@@ -61,8 +61,8 @@ export const handler: Handler = async (event) => {
     // Store reply and mark original as responded
     await execute(
       `UPDATE inbox_messages 
-       SET status = 'responded', response = ?, response_at = ?, reply_id = ?
-       WHERE message_id = ?`,
+       SET status = 'responded', response = $1, response_at = $2, reply_id = $3
+       WHERE message_id = $4`,
       [response, now, reply_id, message_id]
     );
     

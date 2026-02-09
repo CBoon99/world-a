@@ -223,7 +223,7 @@ export const handler: Handler = async (event) => {
     await execute(
       `INSERT INTO inbox_messages 
        (message_id, from_agent_id, subject, body, signature, message_type, visa_ref, receipt_ref, idempotency_key, sent_at, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')`,
       [message_id, from, subject, body, signature, messageType, visa || null, receipt || null, idempotencyKey, now]
     );
     

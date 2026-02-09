@@ -17,19 +17,22 @@ export const handler: Handler = async (event, context) => {
 
     let sql = 'SELECT * FROM elections WHERE 1=1';
     const queryParams: any[] = [];
+    let paramIndex = 1;
 
     if (status !== 'all') {
-      sql += ` AND status = ?`;
+      sql += ` AND status = $${paramIndex}`;
       queryParams.push(status);
+      paramIndex++;
     }
 
     if (role) {
-      sql += ` AND role = ?`;
+      sql += ` AND role = $${paramIndex}`;
       queryParams.push(role);
+      paramIndex++;
     }
 
     const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as count');
-    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     queryParams.push(limit, offset);
 
     const elections = await query(sql, queryParams);

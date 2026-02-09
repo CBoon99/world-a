@@ -66,7 +66,7 @@ export const handler: Handler = async (event) => {
       const notification_id = `notif_${randomUUID().slice(0, 8)}`;
       await execute(
         `INSERT INTO notifications (notification_id, agent_id, type, reference_id, title, content, created_at, read)
-         VALUES (?, ?, 'system', ?, ?, ?, ?, 0)`,
+         VALUES ($1, $2, 'system', $3, $4, $5, $6, 0)`,
         [
           notification_id,
           ticket.author_agent_id,

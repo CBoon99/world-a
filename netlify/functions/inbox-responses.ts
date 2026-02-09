@@ -16,7 +16,7 @@ export const handler: Handler = async (event) => {
     const messages = await query(
       `SELECT message_id, subject, sent_at, status, response, response_at, reply_id
        FROM inbox_messages 
-       WHERE from_agent_id = ? AND response IS NOT NULL
+       WHERE from_agent_id = $1 AND response IS NOT NULL
        ORDER BY response_at DESC
        LIMIT 20`,
       [auth.agent_id]

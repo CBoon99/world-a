@@ -52,7 +52,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   await execute(
     `INSERT INTO visits (visit_id, visitor_agent_id, plot_id, status, requested_at, visit_type)
-     VALUES (?, ?, ?, 'pending', ?, ?)`,
+     VALUES ($1, $2, $3, 'pending', $4, $5)`,
     [visit_id, agent_id, plot_id, now, visit_type]
   );
 
