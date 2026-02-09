@@ -58,7 +58,6 @@ export const handler: Handler = async (event, context) => {
         verification: {
           ok: authReq.agent_verification.ok,
           valid: authReq.agent_verification.valid,
-          entity_type: authReq.agent_verification.entity_type,
           dev_bypass: authReq.agent_verification.dev_bypass || false,
         },
       }),

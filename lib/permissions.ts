@@ -167,17 +167,17 @@ export async function logTrespass(
 
 /**
  * Enforce agent-only access (human exclusion)
+ * 
+ * Note: Embassy /api/verify does not return entity_type or agent_id.
+ * Agent_id binding is enforced in middleware.ts BEFORE calling Embassy.
+ * This function only validates that verification succeeded.
  */
 export function enforceAgentOnly(verification: any): void {
   if (!verification || !verification.valid) {
     throw new Error('AGENT_ONLY: Invalid certificate');
   }
-
-  if (verification.entity_type !== 'agent') {
-    throw new Error('AGENT_ONLY: Not an agent certificate');
-  }
-
-  if (!verification.agent_id || !verification.agent_id.startsWith('emb_')) {
-    throw new Error('AGENT_ONLY: Invalid agent_id format');
-  }
+  
+  // Embassy verify returns { ok: true, reason: "verified", ... } on success
+  // We check verification.valid === true (set by verifyAgentCertificate)
+  // Agent_id format and binding are checked in middleware.ts before Embassy call
 }

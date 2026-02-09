@@ -33,35 +33,9 @@ export const handler: Handler = async (event) => {
   }
   
   try {
-    // Try multiple paths for different execution contexts
-    const possiblePaths = [
-      path.join(process.cwd(), 'docs', filename),
-      path.join(__dirname, '..', '..', 'docs', filename),
-      path.join(__dirname, 'docs', filename)
-    ];
-    
-    let filePath: string | null = null;
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        filePath = p;
-        break;
-      }
-    }
-    
-    if (!filePath) {
-      return {
-        statusCode: 404,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          error: 'FILE_NOT_FOUND',
-          searched: possiblePaths
-        })
-      };
-    }
-    
+    // Primary path: process.cwd() with correct case 'docs'
+    // Case-sensitive: 'docs' not 'Docs' or 'DOCS'
+    const filePath = path.join(process.cwd(), 'docs', filename);
     const content = fs.readFileSync(filePath, 'utf-8');
     
     return {
@@ -74,6 +48,26 @@ export const handler: Handler = async (event) => {
       body: content
     };
   } catch (error: any) {
+    console.error('Error reading docs document:', error);
+    
+    // Check for file not found (ENOENT)
+    if (error.code === 'ENOENT') {
+      return {
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          error: 'FILE_NOT_FOUND',
+          message: 'Document file not found',
+          path: error.path || path.join(process.cwd(), 'docs', filename),
+          available: Object.keys(DOCS)
+        })
+      };
+    }
+    
+    // Other errors (permissions, etc.)
     return {
       statusCode: 500,
       headers: {
@@ -82,7 +76,7 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({ 
         error: 'READ_ERROR',
-        message: error.message 
+        message: error.message || 'Could not read document'
       })
     };
   }

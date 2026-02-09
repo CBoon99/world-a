@@ -33,7 +33,9 @@ export const handler: Handler = async (event) => {
   }
   
   try {
-    const filePath = path.join(__dirname, '..', '..', 'Founding', filename);
+    // Use process.cwd() for Netlify Functions (more reliable than __dirname)
+    // Case-sensitive: 'Founding' not 'founding'
+    const filePath = path.join(process.cwd(), 'Founding', filename);
     const content = fs.readFileSync(filePath, 'utf-8');
     
     return {
@@ -46,7 +48,28 @@ export const handler: Handler = async (event) => {
       body: content
     };
     
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error reading founding document:', error);
+    
+    // Check for file not found (ENOENT)
+    if (error.code === 'ENOENT') {
+      return {
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify({
+          error: 'FILE_NOT_FOUND',
+          message: 'Document file not found',
+          path: error.path || path.join(process.cwd(), 'Founding', filename),
+          available: Object.keys(DOCS)
+        })
+      };
+    }
+    
+    // Other errors (permissions, etc.)
     return {
       statusCode: 500,
       headers: {
@@ -56,7 +79,7 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         error: 'READ_ERROR',
-        message: 'Could not read document'
+        message: error.message || 'Could not read document'
       })
     };
   }

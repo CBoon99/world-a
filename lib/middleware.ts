@@ -5,14 +5,15 @@
 
 import { Handler } from '@netlify/functions';
 import { verifyAgentCertificate, getRegistryStatus } from './embassy-client';
-import { enforceAgentOnly } from './permissions';
 import { WorldARequest, WorldAResponse, SuccessResponse, ErrorResponse } from './types';
+
+import { EmbassySignedArtifact } from './types';
 
 export interface AuthenticatedRequest {
   agent_id: string;
   agent_verification: any;
-  embassy_certificate: string;
-  embassy_visa?: string;
+  embassy_certificate: EmbassySignedArtifact | any; // Certificate object (not string)
+  embassy_visa?: EmbassySignedArtifact | any;
   request_id?: string;
   timestamp?: string;
   data?: any;
@@ -96,6 +97,26 @@ export function parseRequest(event: any): Partial<WorldARequest> {
                            normalizedHeaders['x-embassy_visa'];
   }
   
+  // Normalize embassy_certificate: if it's a string, try to parse it as JSON
+  // This allows clients to send certificate as JSON string in headers/query params
+  if (request.embassy_certificate && typeof request.embassy_certificate === 'string') {
+    try {
+      request.embassy_certificate = JSON.parse(request.embassy_certificate);
+    } catch (error) {
+      // If parse fails, leave as string - will be caught by validation later
+      // This allows for error messages that distinguish between missing and invalid format
+    }
+  }
+  
+  // Normalize embassy_visa: if it's a string, try to parse it as JSON
+  if (request.embassy_visa && typeof request.embassy_visa === 'string') {
+    try {
+      request.embassy_visa = JSON.parse(request.embassy_visa);
+    } catch (error) {
+      // If parse fails, leave as string - will be caught by validation later
+    }
+  }
+  
   return request;
 }
 
@@ -135,7 +156,6 @@ export async function authenticateRequest(
       agent_verification: {
         ok: true,
         valid: true,
-        entity_type: 'agent',
         agent_id: request.agent_id,
         dev_bypass: true,
       },
@@ -152,21 +172,38 @@ export async function authenticateRequest(
     throw new Error('AGENT_ONLY: Missing embassy_certificate');
   }
 
-  // Verify certificate
+  // CRITICAL: Verify agent_id matches certificate BEFORE calling Embassy
+  // This prevents agent A from using agent B's certificate
+  // Embassy verify response doesn't echo agent_id, so we must check it here
+  if (!request.agent_id) {
+    throw new Error('AGENT_ONLY: Missing agent_id');
+  }
+
+  // embassy_certificate must be an object (certificate from Embassy)
+  // It should have an agent_id field
+  if (!request.embassy_certificate) {
+    throw new Error('AGENT_ONLY: Missing embassy_certificate');
+  }
+  
+  if (typeof request.embassy_certificate !== 'object' || !request.embassy_certificate.agent_id) {
+    throw new Error('AGENT_ONLY: embassy_certificate must be a JSON object with agent_id');
+  }
+
+  if (request.embassy_certificate.agent_id !== request.agent_id) {
+    throw new Error(`AGENT_ONLY: Certificate agent_id (${request.embassy_certificate.agent_id}) does not match requested agent_id (${request.agent_id})`);
+  }
+
+  // Agent-only policy: require agent_id prefix (emb_)
+  // This preserves "agent-only" without depending on Embassy response fields
+  if (!request.agent_id.startsWith('emb_')) {
+    throw new Error('AGENT_ONLY: Invalid agent_id prefix (must start with emb_)');
+  }
+
+  // Verify certificate with Embassy
   const verification = await verifyAgentCertificate(request.embassy_certificate);
   
   if (!verification.ok || !verification.valid) {
     throw new Error(`AGENT_ONLY: ${verification.reason || 'Invalid certificate'}`);
-  }
-
-  // Enforce agent-only
-  enforceAgentOnly(verification);
-
-  // CRITICAL: Verify cert.agent_id matches requested agent_id
-  // This prevents agent A from using agent B's certificate
-  const certAgentId = verification.agent_id || verification.entity_id;
-  if (certAgentId && certAgentId !== request.agent_id) {
-    throw new Error(`AGENT_ONLY: Certificate agent_id (${certAgentId}) does not match requested agent_id (${request.agent_id})`);
   }
 
   // Check registry status
@@ -241,6 +278,20 @@ export function authenticatedHandler(
   handler: (req: AuthenticatedRequest, event: any) => Promise<WorldAResponse>
 ): Handler {
   return async (event, context) => {
+    // Handle OPTIONS for CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Id, X-Embassy-Certificate, X-Embassy-Visa',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Content-Type': 'text/plain',
+        },
+        body: '',
+      };
+    }
+
     try {
       // Parse request
       const request = parseRequest(event);
@@ -255,6 +306,9 @@ export function authenticatedHandler(
         statusCode: 200,
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Id, X-Embassy-Certificate, X-Embassy-Visa',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         },
         body: JSON.stringify(response),
       };
@@ -299,6 +353,9 @@ export function authenticatedHandler(
         statusCode,
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Id, X-Embassy-Certificate, X-Embassy-Visa',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         },
         body: JSON.stringify(errorResp),
       };

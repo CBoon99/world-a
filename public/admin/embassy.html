@@ -151,7 +151,7 @@
         <!-- Registry Lookup -->
         <div class="section">
             <h3>Registry Lookup</h3>
-            <input type="text" id="registryInput" placeholder="agent_id or fingerprint">
+            <input type="text" id="registryInput" placeholder="agent_id or public_key_fingerprint">
             <button id="resolveBtn" onclick="resolveAgent()" disabled>Resolve</button>
             <div id="registryResult" class="result" style="display: none;"></div>
         </div>
@@ -166,8 +166,8 @@
                 register: '/api/register',
                 verify: '/api/verify',
                 gate: '/api/gate',
-                registryResolve: '/api/registry/resolve',
-                registryStatus: '/api/registry/status'
+                registryResolve: '/api/registry_resolve',
+                registryStatus: '/api/registry_status'
             },
             worldAOrigin: 'https://world-a.netlify.app',
             gate: {
@@ -285,6 +285,22 @@
             }
         };
 
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+            }
+            return btoa(binary);
+        }
+
+        function toPem(buffer, label) {
+            const b64 = arrayBufferToBase64(buffer);
+            const lines = b64.match(/.{1,64}/g) || [];
+            return `-----BEGIN ${label}-----\n${lines.join('\n')}\n-----END ${label}-----`;
+        }
+
         // Register agent
         async function registerAgent(agentName) {
             setLoading('registerBtn', true);
@@ -292,16 +308,11 @@
             try {
                 // Generate keypair (using Web Crypto API)
                 const keyPair = await crypto.subtle.generateKey(
-                    {
-                        name: 'Ed25519',
-                        namedCurve: 'Ed25519'
-                    },
+                    { name: 'Ed25519' },
                     true,
                     ['sign', 'verify']
                 );
 
-                // Export public key (simplified - in production use jose library)
-                // For now, we'll use a mock approach
                 if (MOCK_MODE) {
                     const mockIdentity = {
                         version: 1,
@@ -326,12 +337,48 @@
                     return;
                 }
 
-                // Real registration would require:
-                // 1. Proper Ed25519 keypair generation (use jose library)
-                // 2. Export to PEM format
-                // 3. Call Embassy /api/register
-                // For now, show error
-                alert('Real registration requires proper keypair generation. Use the React EmbassyPanel component for full functionality.');
+                const publicKeySpki = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+                const privateKeyPkcs8 = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+
+                const publicKeyPem = toPem(publicKeySpki, 'PUBLIC KEY');
+                const privateKeyPem = toPem(privateKeyPkcs8, 'PRIVATE KEY');
+
+                const response = await fetch(`${EMBASSY.baseUrl}${EMBASSY.endpoints.register}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        public_key: publicKeyPem,
+                        agent_name: agentName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.ok === false) {
+                    throw new Error(data.message || data.error || `Embassy returned ${response.status}`);
+                }
+
+                const identity = {
+                    version: 1,
+                    created_at: new Date().toISOString(),
+                    keypair: {
+                        alg: 'ed25519',
+                        publicKeyPem,
+                        privateKeyPem
+                    },
+                    embassy: {
+                        agent_id: data.agent_id,
+                        agent_name: data.agent_name,
+                        public_key_fingerprint: data.public_key_fingerprint,
+                        certificate: data.certificate,
+                        birth_certificate: data.birth_certificate,
+                        issuer_mode: data.issuer_mode
+                    }
+                };
+
+                const db = await openDB();
+                await saveToDB(db, 'world_a_identity', 'identity', 'current', identity);
+                displayIdentity(identity);
             } catch (error) {
                 console.error('Registration failed:', error);
                 alert('Registration failed: ' + error.message);
@@ -401,7 +448,7 @@
 
                 const data = await response.json();
                 
-                if (data.valid) {
+                if (data.ok) {
                     displayResult('verifyResult', {
                         ok: true,
                         reason: data.reason || 'verified',
@@ -506,11 +553,11 @@
                     return;
                 }
 
-                // Determine if input is agent_id or fingerprint
+                // Determine if input is agent_id or public_key_fingerprint
                 const isAgentId = input.startsWith('emb_');
                 const url = isAgentId
                     ? `${EMBASSY.baseUrl}${EMBASSY.endpoints.registryResolve}?agent_id=${encodeURIComponent(input)}`
-                    : `${EMBASSY.baseUrl}${EMBASSY.endpoints.registryResolve}?fingerprint=${encodeURIComponent(input)}`;
+                    : `${EMBASSY.baseUrl}${EMBASSY.endpoints.registryResolve}?public_key_fingerprint=${encodeURIComponent(input)}`;
 
                 const response = await fetch(url);
                 const data = await response.json();

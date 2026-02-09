@@ -2,10 +2,22 @@
  * Common types for World A
  */
 
+/**
+ * Embassy-signed artifact (certificate or visa)
+ * Matches what Embassy /api/register returns
+ */
+export interface EmbassySignedArtifact {
+  agent_id: string;
+  signature: string;
+  issued_at?: string;
+  issuer_mode?: 'authoritative' | 'reference';
+  [key: string]: any; // Allow additional fields from Embassy
+}
+
 export interface WorldARequest {
   agent_id: string;
-  embassy_certificate: string;
-  embassy_visa?: string;
+  embassy_certificate: EmbassySignedArtifact | any; // Certificate object from Embassy
+  embassy_visa?: EmbassySignedArtifact | any; // Optional visa object
   request_id?: string;
   timestamp?: string;
   data?: any;

@@ -109,11 +109,9 @@ export async function embassyRegister(params: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": getGateAuthHeader(),
-        "Origin": EMBASSY.worldAOrigin,
       },
       body: JSON.stringify({
-        public_key_pem: params.publicKeyPem,
+        public_key: params.publicKeyPem,
         agent_name: params.agentName,
       }),
     });
@@ -191,7 +189,7 @@ export async function embassyVerify(params: {
 
     const data = await response.json();
     
-    if (data.valid) {
+    if (data.ok) {
       return {
         ok: true,
         reason: data.reason || "verified",
@@ -288,7 +286,7 @@ export async function embassyGate(params: {
 }
 
 /**
- * Resolve agent by agent_id or fingerprint
+ * Resolve agent by agent_id or public_key_fingerprint
  * CRITICAL VALIDATION: At least one parameter must be provided
  */
 export async function embassyRegistryResolve(params: {
@@ -303,7 +301,7 @@ export async function embassyRegistryResolve(params: {
     return {
       ok: false,
       error: "missing_param",
-      message: "Provide agentId or fingerprint",
+      message: "Provide agentId or public_key_fingerprint",
     };
   }
 
@@ -318,7 +316,7 @@ export async function embassyRegistryResolve(params: {
   try {
     const queryParams = new URLSearchParams();
     if (params.agentId) queryParams.set("agent_id", params.agentId);
-    if (params.fingerprint) queryParams.set("fingerprint", params.fingerprint);
+    if (params.fingerprint) queryParams.set("public_key_fingerprint", params.fingerprint);
 
     const response = await fetch(
       `${EMBASSY.baseUrl}${EMBASSY.endpoints.registryResolve}?${queryParams.toString()}`

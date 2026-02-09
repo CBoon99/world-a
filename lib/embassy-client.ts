@@ -8,11 +8,7 @@ const EMBASSY_URL = process.env.EMBASSY_URL || 'https://embassy-trust-protocol.n
 export interface EmbassyVerification {
   ok: boolean;
   valid: boolean;
-  entity_type?: 'agent' | 'human' | 'organization';
-  agent_id?: string;
-  entity_id?: string; // Alternative field name used by some Embassy responses
   reason?: string;
-  certificate?: any;
 }
 
 export interface RegistryStatus {
@@ -23,9 +19,22 @@ export interface RegistryStatus {
 }
 
 /**
- * Verify an agent certificate
+ * Verify an agent certificate (visa) with Embassy
+ * 
+ * Embassy production /api/verify expects:
+ *   { "visa": <certificate_object> }
+ * and returns:
+ *   { "ok": true, "reason": "verified", ... }
+ * 
+ * Example successful verify:
+ *   curl -X POST https://embassy-trust-protocol.netlify.app/api/verify \
+ *     -H "Content-Type: application/json" \
+ *     -d '{ "visa": <CERT_OBJECT> }'
+ *   returns { ok:true, reason:"verified", ... }
+ * 
+ * @param artifact - Embassy certificate or visa object (must have agent_id and signature)
  */
-export async function verifyAgentCertificate(certificate: string): Promise<EmbassyVerification> {
+export async function verifyAgentCertificate(artifact: any): Promise<EmbassyVerification> {
   try {
     const response = await fetch(`${EMBASSY_URL}/api/verify`, {
       method: 'POST',
@@ -33,8 +42,7 @@ export async function verifyAgentCertificate(certificate: string): Promise<Embas
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        document: certificate,
-        type: 'agent_certificate',
+        visa: artifact,
       }),
     });
 
@@ -48,21 +56,18 @@ export async function verifyAgentCertificate(certificate: string): Promise<Embas
 
     const data: any = await response.json();
     
-    // Check if verification was successful
-    if (data.valid && data.entity_type === 'agent') {
+    // Embassy returns { ok: true, reason: "verified", ... } on success
+    if (data.ok === true) {
       return {
         ok: true,
         valid: true,
-        entity_type: 'agent',
-        agent_id: data.agent_id,
-        certificate: data,
+        reason: data.reason || 'verified',
       };
     }
 
     return {
       ok: true,
       valid: false,
-      entity_type: data.entity_type,
       reason: data.reason || 'Invalid certificate',
     };
   } catch (error: any) {
