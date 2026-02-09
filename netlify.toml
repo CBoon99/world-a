@@ -12,8 +12,6 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-
-[functions."*"]
   included_files = [
     "lib/**/*.ts",
     "Safety/**",
