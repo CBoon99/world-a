@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embassy Integration — World A Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .admin-header {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .admin-header h1 { color: #4299e1; margin-bottom: 10px; }
+        .admin-nav a {
+            color: #4299e1;
+            text-decoration: none;
+            margin-right: 16px;
+        }
+        .admin-nav a:hover { text-decoration: underline; }
+        .section {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .section h3 {
+            color: #4299e1;
+            margin-bottom: 15px;
+        }
+        .section button {
+            padding: 8px 16px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .section button:hover { background: #3182ce; }
+        .section button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .section input,
+        .section textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            background: #0f0f1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #eee;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .section textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .result {
+            margin-top: 12px;
+            padding: 12px;
+            background: #0f0f1a;
+            border-radius: 4px;
+            overflow: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .error {
+            color: #fc8181;
+        }
+        .success {
+            color: #68d391;
+        }
+        .identity-info {
+            background: #0f0f1a;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+        .identity-info p {
+            margin: 4px 0;
+            color: #888;
+        }
+        .identity-info strong {
+            color: #4299e1;
+        }
+        .delete-btn {
+            background: #dc3545 !important;
+            margin-top: 12px;
+        }
+        .delete-btn:hover {
+            background: #c82333 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="admin-header">
+            <h1>🌍 Embassy Integration</h1>
+            <div class="admin-nav">
+                <a href="/admin">← Dashboard</a>
+                <a href="/admin/embassy.html">Embassy</a>
+            </div>
+        </div>
+
+        <!-- Health Check -->
+        <div class="section">
+            <h3>Embassy Health Check</h3>
+            <button id="checkHealth" onclick="checkHealth()">Check Health</button>
+            <div id="healthResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Agent Identity -->
+        <div class="section">
+            <h3>Agent Identity</h3>
+            <div id="identityInfo"></div>
+            <button id="registerBtn" onclick="showRegisterDialog()" style="display: none;">Register New Agent</button>
+            <button id="deleteBtn" class="delete-btn" onclick="deleteIdentity()" style="display: none;">Delete Identity</button>
+        </div>
+
+        <!-- Verify Artifact -->
+        <div class="section">
+            <h3>Verify Artifact</h3>
+            <textarea id="verifyInput" placeholder="Paste certificate/visa JSON here"></textarea>
+            <button id="verifyBtn" onclick="verifyArtifact()" disabled>Verify</button>
+            <div id="verifyResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Request Visa -->
+        <div class="section">
+            <h3>Request Visa</h3>
+            <button onclick="requestVisa('observe')">Request "observe" Visa</button>
+            <div id="gateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Registry Lookup -->
+        <div class="section">
+            <h3>Registry Lookup</h3>
+            <input type="text" id="registryInput" placeholder="agent_id or fingerprint">
+            <button id="resolveBtn" onclick="resolveAgent()" disabled>Resolve</button>
+            <div id="registryResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Embassy configuration
+        const EMBASSY = {
+            baseUrl: 'https://embassy-trust-protocol.netlify.app',
+            endpoints: {
+                health: '/api/health',
+                register: '/api/register',
+                verify: '/api/verify',
+                gate: '/api/gate',
+                registryResolve: '/api/registry/resolve',
+                registryStatus: '/api/registry/status'
+            },
+            worldAOrigin: 'https://world-a.netlify.app',
+            gate: {
+                authHeader: 'Bearer dev'
+            }
+        };
+
+        // Check if running on localhost (mock mode)
+        const MOCK_MODE = window.location.hostname === 'localhost';
+
+        // Helper: Display result
+        function displayResult(elementId, data, isError = false) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            el.className = `result ${isError ? 'error' : 'success'}`;
+            el.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Helper: Set loading state
+        function setLoading(buttonId, loading) {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.disabled = loading;
+                btn.textContent = loading ? 'Loading...' : btn.textContent.replace('Loading...', '');
+            }
+        }
+
+        // Check Embassy health
+        window.checkHealth = async function() {
+            setLoading('checkHealth', true);
+            const resultEl = document.getElementById('healthResult');
+            resultEl.style.display = 'none';
+
+            try {
+                if (MOCK_MODE) {
+                    displayResult('healthResult', {
+                        ok: true,
+                        keys_ready: true,
+                        storage_ready: true
+                    });
+                    return;
+                }
+
+                const response = await fetch(`${EMBASSY.baseUrl}${EMBASSY.endpoints.health}`);
+                const data = await response.json();
+                
+                if (data.keys_ready && data.storage_ready) {
+                    displayResult('healthResult', {
+                        ok: true,
+                        keys_ready: data.keys_ready,
+                        storage_ready: data.storage_ready
+                    });
+                } else {
+                    displayResult('healthResult', {
+                        ok: false,
+                        error: 'embassy_not_ready',
+                        message: 'Embassy keys or storage not ready'
+                    }, true);
+                }
+            } catch (error) {
+                displayResult('healthResult', {
+                    ok: false,
+                    error: 'network_error',
+                    message: error.message
+                }, true);
+            } finally {
+                setLoading('checkHealth', false);
+            }
+        };
+
+        // Load identity from IndexedDB
+        async function loadIdentity() {
+            try {
+                const db = await openDB();
+                const identity = await getFromDB(db, 'world_a_identity', 'identity', 'current');
+                
+                if (identity) {
+                    displayIdentity(identity);
+                } else {
+                    showRegisterButton();
+                }
+            } catch (error) {
+                console.error('Failed to load identity:', error);
+                showRegisterButton();
+            }
+        }
+
+        // Display identity info
+        function displayIdentity(identity) {
+            const infoEl = document.getElementById('identityInfo');
+            infoEl.innerHTML = `
+                <div class="identity-info">
+                    <p><strong>Agent ID:</strong> ${identity.embassy.agent_id}</p>
+                    <p><strong>Name:</strong> ${identity.embassy.agent_name}</p>
+                    <p><strong>Fingerprint:</strong> ${identity.embassy.public_key_fingerprint}</p>
+                    <p><strong>Issuer Mode:</strong> ${identity.embassy.issuer_mode}</p>
+                </div>
+            `;
+            document.getElementById('registerBtn').style.display = 'none';
+            document.getElementById('deleteBtn').style.display = 'block';
+        }
+
+        // Show register button
+        function showRegisterButton() {
+            document.getElementById('identityInfo').innerHTML = '<p style="color: #888;">No identity stored. Register a new agent to get started.</p>';
+            document.getElementById('registerBtn').style.display = 'block';
+            document.getElementById('deleteBtn').style.display = 'none';
+        }
+
+        // Show register dialog
+        window.showRegisterDialog = function() {
+            const name = prompt('Enter agent name:');
+            if (name) {
+                registerAgent(name);
+            }
+        };
+
+        // Register agent
+        async function registerAgent(agentName) {
+            setLoading('registerBtn', true);
+            
+            try {
+                // Generate keypair (using Web Crypto API)
+                const keyPair = await crypto.subtle.generateKey(
+                    {
+                        name: 'Ed25519',
+                        namedCurve: 'Ed25519'
+                    },
+                    true,
+                    ['sign', 'verify']
+                );
+
+                // Export public key (simplified - in production use jose library)
+                // For now, we'll use a mock approach
+                if (MOCK_MODE) {
+                    const mockIdentity = {
+                        version: 1,
+                        created_at: new Date().toISOString(),
+                        keypair: {
+                            alg: 'ed25519',
+                            publicKeyPem: 'mock_public_key',
+                            privateKeyPem: 'mock_private_key'
+                        },
+                        embassy: {
+                            agent_id: `emb_mock_${Date.now()}`,
+                            agent_name: agentName,
+                            public_key_fingerprint: `mock_fp_${Date.now()}`,
+                            certificate: { mock: true },
+                            issuer_mode: 'reference'
+                        }
+                    };
+                    
+                    const db = await openDB();
+                    await saveToDB(db, 'world_a_identity', 'identity', 'current', mockIdentity);
+                    displayIdentity(mockIdentity);
+                    return;
+                }
+
+                // Real registration would require:
+                // 1. Proper Ed25519 keypair generation (use jose library)
+                // 2. Export to PEM format
+                // 3. Call Embassy /api/register
+                // For now, show error
+                alert('Real registration requires proper keypair generation. Use the React EmbassyPanel component for full functionality.');
+            } catch (error) {
+                console.error('Registration failed:', error);
+                alert('Registration failed: ' + error.message);
+            } finally {
+                setLoading('registerBtn', false);
+            }
+        }
+
+        // Delete identity
+        window.deleteIdentity = async function() {
+            if (!confirm('Delete stored identity? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const db = await openDB();
+                await deleteFromDB(db, 'world_a_identity', 'identity', 'current');
+                showRegisterButton();
+            } catch (error) {
+                console.error('Failed to delete identity:', error);
+                alert('Failed to delete identity: ' + error.message);
+            }
+        };
+
+        // Verify artifact
+        const verifyInput = document.getElementById('verifyInput');
+        verifyInput.addEventListener('input', function() {
+            document.getElementById('verifyBtn').disabled = !this.value.trim();
+        });
+
+        window.verifyArtifact = async function() {
+            const input = document.getElementById('verifyInput').value.trim();
+            if (!input) return;
+
+            setLoading('verifyBtn', true);
+            const resultEl = document.getElementById('verifyResult');
+            resultEl.style.display = 'none';
+
+            try {
+                let visa;
+                try {
+                    visa = JSON.parse(input);
+                } catch (e) {
+                    displayResult('verifyResult', {
+                        ok: false,
+                        error: 'invalid_json',
+                        message: 'Input must be valid JSON'
+                    }, true);
+                    return;
+                }
+
+                if (MOCK_MODE) {
+                    displayResult('verifyResult', {
+                        ok: true,
+                        reason: 'mock_verification',
+                        type: 'certificate',
+                        issuer_mode: 'reference'
+                    });
+                    return;
+                }
+
+                const response = await fetch(`${EMBASSY.baseUrl}${EMBASSY.endpoints.verify}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ visa })
+                });
+
+                const data = await response.json();
+                
+                if (data.valid) {
+                    displayResult('verifyResult', {
+                        ok: true,
+                        reason: data.reason || 'verified',
+                        type: data.type || 'unknown',
+                        issuer_mode: data.issuer_mode || 'reference'
+                    });
+                } else {
+                    displayResult('verifyResult', {
+                        ok: false,
+                        error: 'invalid_artifact',
+                        reason: data.reason || 'Artifact failed verification'
+                    }, true);
+                }
+            } catch (error) {
+                displayResult('verifyResult', {
+                    ok: false,
+                    error: 'network_error',
+                    message: error.message
+                }, true);
+            } finally {
+                setLoading('verifyBtn', false);
+            }
+        };
+
+        // Request visa
+        window.requestVisa = async function(purpose) {
+            setLoading('checkHealth', true); // Reuse loading state
+            const resultEl = document.getElementById('gateResult');
+            resultEl.style.display = 'none';
+
+            try {
+                if (MOCK_MODE) {
+                    displayResult('gateResult', {
+                        ok: true,
+                        decision: 'permit',
+                        reason_code: 'mock_permit',
+                        visa: { mock: true, purpose, type: 'visa' }
+                    });
+                    return;
+                }
+
+                const response = await fetch(`${EMBASSY.baseUrl}${EMBASSY.endpoints.gate}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': EMBASSY.gate.authHeader
+                    },
+                    body: JSON.stringify({
+                        purpose,
+                        service: 'world_a'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.decision === 'permit') {
+                    displayResult('gateResult', {
+                        ok: true,
+                        decision: 'permit',
+                        reason_code: data.reason_code || 'permitted',
+                        visa: data.visa
+                    });
+                } else {
+                    displayResult('gateResult', {
+                        ok: false,
+                        decision: 'refuse',
+                        reason_code: data.reason_code || 'refused'
+                    }, true);
+                }
+            } catch (error) {
+                displayResult('gateResult', {
+                    ok: false,
+                    error: 'network_error',
+                    message: error.message
+                }, true);
+            } finally {
+                setLoading('checkHealth', false);
+            }
+        };
+
+        // Registry lookup
+        const registryInput = document.getElementById('registryInput');
+        registryInput.addEventListener('input', function() {
+            document.getElementById('resolveBtn').disabled = !this.value.trim();
+        });
+
+        window.resolveAgent = async function() {
+            const input = document.getElementById('registryInput').value.trim();
+            if (!input) return;
+
+            setLoading('resolveBtn', true);
+            const resultEl = document.getElementById('registryResult');
+            resultEl.style.display = 'none';
+
+            try {
+                if (MOCK_MODE) {
+                    displayResult('registryResult', {
+                        ok: true,
+                        agent_id: `emb_mock_${input.substring(0, 8)}`,
+                        status: 'active'
+                    });
+                    return;
+                }
+
+                // Determine if input is agent_id or fingerprint
+                const isAgentId = input.startsWith('emb_');
+                const url = isAgentId
+                    ? `${EMBASSY.baseUrl}${EMBASSY.endpoints.registryResolve}?agent_id=${encodeURIComponent(input)}`
+                    : `${EMBASSY.baseUrl}${EMBASSY.endpoints.registryResolve}?fingerprint=${encodeURIComponent(input)}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                displayResult('registryResult', {
+                    ok: true,
+                    agent_id: data.agent_id,
+                    status: data.status || 'unknown'
+                });
+            } catch (error) {
+                displayResult('registryResult', {
+                    ok: false,
+                    error: 'network_error',
+                    message: error.message
+                }, true);
+            } finally {
+                setLoading('resolveBtn', false);
+            }
+        };
+
+        // IndexedDB helpers
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('world_a_identity', 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('identity')) {
+                        db.createObjectStore('identity');
+                    }
+                };
+            });
+        }
+
+        function getFromDB(db, dbName, storeName, key) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.get(key);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result || null);
+            });
+        }
+
+        function saveToDB(db, dbName, storeName, key, value) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.put(value, key);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve();
+            });
+        }
+
+        function deleteFromDB(db, dbName, storeName, key) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const request = store.delete(key);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve();
+            });
+        }
+
+        // Load identity on page load
+        loadIdentity();
+    </script>
+</body>
+</html>
