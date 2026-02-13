@@ -1,8 +1,13 @@
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { initDatabase, queryOne, query } from '../../lib/db';
 
 export const handler: Handler = async (event, context) => {
+  // Handle OPTIONS preflight FIRST (before any auth/method gates)
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   await initDatabase();
   try {
     // Parse and authenticate request
