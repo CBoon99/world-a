@@ -210,11 +210,6 @@ export async function authenticateRequest(request: Partial<WorldARequest>): Prom
     throw new Error(`AGENT_ONLY: ${verification.reason || 'Invalid certificate'}`);
   }
 
-  // Check registry status
-  const registryStatus = await getRegistryStatus(request.agent_id);
-  if (!registryStatus.exists || registryStatus.revoked) {
-    throw new Error('AGENT_ONLY: Agent not found or revoked');
-  }
 
   return {
     agent_id: request.agent_id,
