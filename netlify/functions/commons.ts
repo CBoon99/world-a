@@ -158,8 +158,11 @@ async function handlePost(event: any, channel: string) {
   // Parse body — support both direct fields and legacy nested `data`
   // Canonical: { "content": "..." }
   // Legacy:    { "data": { "content": "..." } }
-  const body = (request.data ?? {}) as any;
-  const bodyData = (body.data ?? body) as any;
+  const body = (request.data && typeof request.data === 'object') ? request.data as any : {};
+  const bodyData =
+    (body.content !== undefined || body.title !== undefined || body.reply_to !== undefined)
+      ? body
+      : (body.data && typeof body.data === 'object' ? body.data as any : {});
   
   const { title, content, reply_to } = bodyData;
   
