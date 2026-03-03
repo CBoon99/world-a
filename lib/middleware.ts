@@ -65,19 +65,53 @@ export function corsPreflightResponse(event: any) {
 export function parseRequest(event: any): Partial<WorldARequest> {
   const request: Partial<WorldARequest> = {};
 
-  // Step 1: Try to parse JSON body (highest precedence)
-  if (event.body) {
+  // Step 1: Parse JSON body (standard Netlify/Lambda pattern)
+  // Standard pattern: decode base64 if needed, then JSON.parse
+  // Set request.data = parsed object (never Object.assign to request wrapper)
+  if (!event.body) {
+    request.data = {};
+  } else {
     try {
-      const body = JSON.parse(event.body);
-      Object.assign(request, body);
+      // Decode base64 if needed (Netlify/Lambda standard)
+      let raw = event.body;
+      if (event.isBase64Encoded === true) {
+        raw = Buffer.from(event.body, 'base64').toString('utf8');
+      }
+      
+      const parsed = JSON.parse(raw);
+      
+      // Only accept non-array objects; else {}
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        request.data = parsed;
+        
+        // TEMP debug log (remove after verification)
+        console.log(`[parseRequest] isBase64=${!!event.isBase64Encoded} bodyLen=${event.body ? event.body.length : 0} keys=${Object.keys(request.data || {}).slice(0, 10).join(',')}`);
+      } else {
+        request.data = {};
+      }
     } catch (error) {
       if (event.httpMethod === 'POST' || event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {
         throw new Error('Invalid JSON in request body');
       }
+      request.data = {};
     }
   }
 
-  // Step 2: Extract from query string parameters (fallback if not in body)
+  // Step 2: Extract from parsed body (if present and not already found)
+  // This allows clients to send auth fields in body as fallback
+  if (request.data) {
+    if (!request.agent_id && request.data.agent_id) {
+      request.agent_id = request.data.agent_id;
+    }
+    if (!request.embassy_certificate && request.data.embassy_certificate) {
+      request.embassy_certificate = request.data.embassy_certificate;
+    }
+    if (!request.embassy_visa && request.data.embassy_visa) {
+      request.embassy_visa = request.data.embassy_visa;
+    }
+  }
+
+  // Step 3: Extract from query string parameters (fallback if not in body)
   if (event.queryStringParameters) {
     if (event.queryStringParameters.agent_id && !request.agent_id) {
       request.agent_id = event.queryStringParameters.agent_id;
@@ -90,7 +124,7 @@ export function parseRequest(event: any): Partial<WorldARequest> {
     }
   }
 
-  // Step 3: Extract from headers (lowest precedence)
+  // Step 4: Extract from headers (lowest precedence)
   const headers = event.headers || {};
   const headerKeys = Object.keys(headers);
 
