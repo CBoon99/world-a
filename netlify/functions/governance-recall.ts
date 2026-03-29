@@ -51,7 +51,7 @@ export const handler = authenticatedHandler(async (req, event) => {
 
   const embassy_certificate_ref = crypto
     .createHash('sha256')
-    .update(req.embassy_certificate)
+    .update(typeof req.embassy_certificate === 'string' ? req.embassy_certificate : JSON.stringify(req.embassy_certificate))
     .digest('hex')
     .substring(0, 64);
 

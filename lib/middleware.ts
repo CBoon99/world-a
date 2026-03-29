@@ -33,7 +33,7 @@ export function getCorsHeaders(origin?: string) {
 
   return {
     'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Id, X-Embassy-Certificate, X-Embassy-Visa',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Id, X-Embassy-Artifact, X-Embassy-Certificate, X-Embassy-Visa',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
     'Access-Control-Max-Age': '86400',
   };
@@ -84,8 +84,7 @@ export function parseRequest(event: any): Partial<WorldARequest> {
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         request.data = parsed;
         
-        // TEMP debug log (remove after verification)
-        console.log(`[parseRequest] isBase64=${!!event.isBase64Encoded} bodyLen=${event.body ? event.body.length : 0} keys=${Object.keys(request.data || {}).slice(0, 10).join(',')}`);
+
       } else {
         request.data = {};
       }
@@ -98,13 +97,16 @@ export function parseRequest(event: any): Partial<WorldARequest> {
   }
 
   // Step 2: Extract from parsed body (if present and not already found)
-  // This allows clients to send auth fields in body as fallback
+  // Accepts: embassy_artifact (preferred), embassy_certificate (alias), plus wrapper forms
   if (request.data) {
     if (!request.agent_id && request.data.agent_id) {
       request.agent_id = request.data.agent_id;
     }
-    if (!request.embassy_certificate && request.data.embassy_certificate) {
-      request.embassy_certificate = request.data.embassy_certificate;
+    // Artifact extraction: try new name first, then legacy
+    if (!request.embassy_certificate) {
+      request.embassy_certificate =
+        request.data.embassy_artifact ||
+        request.data.embassy_certificate;
     }
     if (!request.embassy_visa && request.data.embassy_visa) {
       request.embassy_visa = request.data.embassy_visa;
@@ -146,6 +148,7 @@ export function parseRequest(event: any): Partial<WorldARequest> {
 
   if (!request.embassy_certificate) {
     request.embassy_certificate =
+      normalizedHeaders['x-embassy-artifact'] ||
       normalizedHeaders['x-embassy-certificate'] ||
       normalizedHeaders['x-embassy_certificate'] ||
       normalizedHeaders['x-embassy-cert'];
@@ -160,8 +163,24 @@ export function parseRequest(event: any): Partial<WorldARequest> {
     try {
       request.embassy_certificate = JSON.parse(request.embassy_certificate);
     } catch (error) {
-      // leave as string; validation will catch it
+      // leave as string; authenticateRequest will reject with a clear error
     }
+  }
+  
+  // Unwrap wrapper objects: { certificate: {...} }, { birth_certificate: {...} }, { visa: {...} }
+  if (request.embassy_certificate && typeof request.embassy_certificate === 'object') {
+    const cert = request.embassy_certificate;
+    if (cert.certificate && typeof cert.certificate === 'object') {
+      request.embassy_certificate = cert.certificate;
+    } else if (cert.birth_certificate && typeof cert.birth_certificate === 'object') {
+      request.embassy_certificate = cert.birth_certificate;
+    } else if (cert.embassy_certificate && typeof cert.embassy_certificate === 'object') {
+      request.embassy_certificate = cert.embassy_certificate;
+    } else if (cert.visa && typeof cert.visa === 'object') {
+      // Legacy wrapper — accept but do not generate
+      request.embassy_certificate = cert.visa;
+    }
+    // else: treat as raw signed artifact (has agent_id + signature directly)
   }
 
   // Normalize embassy_visa: if it's a string, try to parse it as JSON
@@ -237,7 +256,7 @@ export async function authenticateRequest(request: Partial<WorldARequest>): Prom
     throw new Error('AGENT_ONLY: Invalid agent_id prefix (must start with emb_)');
   }
 
-  // Verify certificate with Embassy (payload: { visa: <object> })
+  // Verify certificate with Embassy (payload: { certificate: <object> })
   const verification = await verifyAgentCertificate(request.embassy_certificate);
 
   if (!verification.ok || !verification.valid) {

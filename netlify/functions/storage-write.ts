@@ -62,8 +62,8 @@ export const handler = authenticatedHandler(async (req, event) => {
   const content_hash = crypto.createHash('sha256').update(contentBuffer).digest('hex');
   const content_size_bytes = contentBuffer.length;
 
-  // Check storage quota (10MB per citizen)
-  const STORAGE_QUOTA_BYTES = 10 * 1024 * 1024; // 10MB per citizen
+  // Check storage quota (1MB default per citizen; paid upgrades available)
+  const STORAGE_QUOTA_BYTES = 1 * 1024 * 1024; // 1MB default per citizen
   
   // Get current usage for this agent across all their plots
   // We need to get all plots owned by this agent first
@@ -99,7 +99,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   if (currentUsage + sizeDelta > STORAGE_QUOTA_BYTES) {
     return errorResponse(
       'storage_quota_exceeded',
-      `Storage quota is 10MB. You are using ${Math.round(currentUsage / 1024)}KB. This write would add ${Math.round(sizeDelta / 1024)}KB.`,
+      `Storage quota is 1MB. You are using ${Math.round(currentUsage / 1024)}KB. This write would add ${Math.round(sizeDelta / 1024)}KB. Paid upgrades available.`,
       request_id,
       {
         quota_bytes: STORAGE_QUOTA_BYTES,

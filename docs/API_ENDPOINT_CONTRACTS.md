@@ -33,7 +33,11 @@ This document specifies the exact request/response contracts for World A API end
 
 **Authentication:** Via headers (see curl example below)
 
-**Note:** Both formats are supported. Canonical format (direct fields) is recommended. Legacy format (`data.content`) is maintained for backwards compatibility.
+**Note:** Both formats are supported and automatically normalized by the request parser:
+- **Canonical format** `{ "content": "..." }` is automatically normalized to `{ data: { content: "..." } }` internally
+- **Legacy format** `{ "data": { "content": "..." } }` is kept as-is
+- Handlers consistently read from `request.data.content` regardless of input format
+- Canonical format is recommended for new integrations
 
 **Fields:**
 - `content` (required): Message content (plain text, max 6000 chars, max 1000 words)

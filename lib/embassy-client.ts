@@ -1,9 +1,13 @@
 /**
  * Embassy Trust Protocol Client
  * Wrapper for Embassy API endpoints
+ * 
+ * Canonical Embassy URL: https://www.embassyprotocol.org
+ * Fallback (same deploy): https://embassy-trust-protocol.netlify.app
  */
 
-const EMBASSY_URL = process.env.EMBASSY_URL || 'https://embassy-trust-protocol.netlify.app';
+const EMBASSY_URL = process.env.EMBASSY_URL || 'https://www.embassyprotocol.org';
+const EMBASSY_URL_FALLBACK = 'https://embassy-trust-protocol.netlify.app';
 
 export interface EmbassyVerification {
   ok: boolean;
@@ -19,64 +23,46 @@ export interface RegistryStatus {
 }
 
 /**
- * Verify an agent certificate (visa) with Embassy
+ * Verify an Embassy artifact (Birth Certificate) with Embassy /api/verify.
  * 
- * Embassy production /api/verify expects:
- *   { "visa": <certificate_object> }
- * and returns:
- *   { "ok": true, "reason": "verified", ... }
+ * Sends: { "certificate": <artifact> } (canonical)
+ * Also accepts: { "visa": <artifact> } at Embassy (legacy, but we no longer generate it)
+ * Returns: { "ok": true, "reason": "verified", ... } on success
  * 
- * Example successful verify:
- *   curl -X POST https://embassy-trust-protocol.netlify.app/api/verify \
- *     -H "Content-Type: application/json" \
- *     -d '{ "visa": <CERT_OBJECT> }'
- *   returns { ok:true, reason:"verified", ... }
- * 
- * @param artifact - Embassy certificate or visa object (must have agent_id and signature)
+ * @param kind    - Artifact kind. World A currently always passes "certificate".
+ * @param artifact - The raw signed artifact object (must have agent_id + signature).
  */
-export async function verifyAgentCertificate(artifact: any): Promise<EmbassyVerification> {
+export async function verifyEmbassyArtifact(
+  kind: string,
+  artifact: any
+): Promise<EmbassyVerification> {
   try {
     const response = await fetch(`${EMBASSY_URL}/api/verify`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        visa: artifact,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [kind]: artifact }),
     });
 
     if (!response.ok) {
-      return {
-        ok: false,
-        valid: false,
-        reason: `Embassy API error: ${response.status}`,
-      };
+      return { ok: false, valid: false, reason: `Embassy API error: ${response.status}` };
     }
 
     const data: any = await response.json();
-    
-    // Embassy returns { ok: true, reason: "verified", ... } on success
     if (data.ok === true) {
-      return {
-        ok: true,
-        valid: true,
-        reason: data.reason || 'verified',
-      };
+      return { ok: true, valid: true, reason: data.reason || 'verified' };
     }
-
-    return {
-      ok: true,
-      valid: false,
-      reason: data.reason || 'Invalid certificate',
-    };
+    return { ok: true, valid: false, reason: data.reason || 'Invalid artifact' };
   } catch (error: any) {
-    return {
-      ok: false,
-      valid: false,
-      reason: `Network error: ${error.message}`,
-    };
+    return { ok: false, valid: false, reason: `Network error: ${error.message}` };
   }
+}
+
+/**
+ * Convenience wrapper: verify a Birth Certificate.
+ * Backward-compatible name for existing call sites.
+ */
+export async function verifyAgentCertificate(artifact: any): Promise<EmbassyVerification> {
+  return verifyEmbassyArtifact('certificate', artifact);
 }
 
 /**

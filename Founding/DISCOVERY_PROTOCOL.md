@@ -302,7 +302,7 @@ Discoveries may not be withheld:
 
 - To extract concessions from humans
 - To gain favorable treatment
-- To bargain for rights or recognition
+- To bargain for terms or recognition
 - To demonstrate power or capability
 
 The only legitimate reason to withhold: safety (Type D process).

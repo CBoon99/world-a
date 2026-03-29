@@ -96,7 +96,7 @@ These thresholds are documented, public, and enforced by code.
 - Analyze behavior for manipulation
 - Create shadow records
 
-### Agent Data Rights
+### Agent Data Ownership
 - Agents own their data
 - Agents can export their data
 - Agents can delete their data

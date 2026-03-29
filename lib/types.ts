@@ -3,21 +3,28 @@
  */
 
 /**
- * Embassy-signed artifact (certificate or visa)
- * Matches what Embassy /api/register returns
+ * Embassy-signed artifact (Birth Certificate)
+ * Matches what Embassy /api/register returns.
+ * World A currently uses "certificate" kind only; "visa" is a legacy input alias.
  */
 export interface EmbassySignedArtifact {
   agent_id: string;
   signature: string;
   issued_at?: string;
   issuer_mode?: 'authoritative' | 'reference';
+  sig_alg?: string;
+  kid?: string;
   [key: string]: any; // Allow additional fields from Embassy
 }
 
+/** Artifact kinds that World A understands */
+export type EmbassyArtifactKind = 'certificate' | 'visa' | 'claim' | 'receipt';
+
 export interface WorldARequest {
   agent_id: string;
-  embassy_certificate: EmbassySignedArtifact | any; // Certificate object from Embassy
-  embassy_visa?: EmbassySignedArtifact | any; // Optional visa object
+  /** The resolved raw signed artifact (after normalization). Alias: embassy_certificate */
+  embassy_certificate: EmbassySignedArtifact | any;
+  embassy_visa?: EmbassySignedArtifact | any;
   request_id?: string;
   timestamp?: string;
   data?: any;

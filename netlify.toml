@@ -5,7 +5,7 @@
 [build.environment]
   NODE_VERSION = "20"
   # Embassy Trust Protocol URL (required for production)
-  EMBASSY_URL = "https://embassy-trust-protocol.netlify.app"
+  EMBASSY_URL = "https://www.embassyprotocol.org"
   # Dev auth bypass (set to "true" to skip Embassy verification in local dev)
   # WORLD_A_DEV_AUTH_BYPASS = "false"
 

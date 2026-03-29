@@ -37,7 +37,7 @@ export async function initDatabase(): Promise<void> {
         : undefined
     });
     
-    console.log('Connected to PostgreSQL');
+    // Connection established (log suppressed in production)
     
     // Await schema creation before returning
     await createTables();

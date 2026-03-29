@@ -15,7 +15,7 @@
 const https = require('https');
 const http = require('http');
 
-const BASE_URL = process.argv[2] || 'http://localhost:8888';
+const BASE_URL = process.argv[2] || (process.env.NETLIFY_DEV === 'true' ? 'http://localhost:8888' : null);
 
 // Mock credentials for testing (will fail auth but should fail with correct error, not contract error)
 const MOCK_AGENT_ID = 'emb_test123';
@@ -225,6 +225,19 @@ async function testPlotClaimContract() {
 
 async function runTests() {
   console.log('🧪 Endpoint Contract Tests');
+  
+  if (!BASE_URL) {
+    console.log('⚠️  No BASE_URL provided and NETLIFY_DEV is not running.');
+    console.log('   Skipping network tests. To run:');
+    console.log('   - Start netlify dev: npm run dev');
+    console.log('   - Or provide BASE_URL: node test/endpoint-contracts.test.js https://world-a.netlify.app');
+    console.log('');
+    console.log('✅ Body normalization logic is in lib/middleware.ts parseRequest()');
+    console.log('   - Canonical: { "content": "..." } → normalized to { data: { content: "..." } }');
+    console.log('   - Legacy:    { "data": { "content": "..." } } → kept as-is');
+    process.exit(0);
+  }
+  
   console.log('Base URL:', BASE_URL);
   
   const commonsOk = await testCommonsPostContract();

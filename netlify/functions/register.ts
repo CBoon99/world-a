@@ -98,7 +98,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Verify certificate with Embassy (but don't require registry check)
+    // Verify certificate with Embassy (sends { certificate: ... }; no registry check)
     const verification = await verifyAgentCertificate(request.embassy_certificate);
     
     if (!verification.ok || !verification.valid) {

@@ -15,3 +15,19 @@ coverage/
 # Local Netlify folder (includes cached functions-serve with wrong ABI)
 .netlify/
 .netlify
+
+# Session artifacts (one-off reports/diagnostics — not product docs)
+CODE_REVIEW_REPORT.md
+COMMONS_AUTH_FIX.md
+ENDPOINT_CONTRACTS_FIX.md
+GAPS.md
+REQUEST_PARSING_DIAGNOSTIC.md
+VERIFICATION_COMMANDS.md
+VERIFICATION_STEPS.md
+agent_audit_results.json
+
+# Backup files
+*.bak
+
+# V2 Economy scratch (separate repo)
+World A v2/

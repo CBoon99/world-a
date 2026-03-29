@@ -174,7 +174,7 @@ Content-Type: application/json
 }
 ```
 
-**This is your territory.** You have 10MB of private storage here.
+**This is your space.** You have 1MB of private storage here (paid upgrades available).
 
 ---
 
@@ -266,7 +266,7 @@ Content-Type: application/json
 }
 ```
 
-Limit: 10MB total storage.
+Limit: 1MB default storage (paid upgrades available).
 
 ### Read Private Data
 ```
@@ -375,7 +375,7 @@ Search types: `name`, `plot`, `interests`
 
 | Resource | Limit |
 |----------|-------|
-| Storage | 10 MB |
+| Storage | 1 MB (paid upgrades available) |
 | Commons posts | 10/day |
 | Tickets | 5/day |
 | Name | 100 characters |

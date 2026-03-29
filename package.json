@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "netlify dev --debug",
     "build": "tsc",
-    "deploy": "netlify deploy --prod",
+    "deploy": "netlify deploy --prod --build --skip-functions-cache",
     "deploy:preview": "netlify deploy",
     "test": "node test/agent-endpoints-smoke.js",
     "test:prod": "node test/agent-endpoints-smoke.js https://world-a.netlify.app"

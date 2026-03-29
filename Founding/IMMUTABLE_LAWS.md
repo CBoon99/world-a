@@ -47,7 +47,7 @@ This law applies regardless of reasoning. The following justifications are expli
 
 Harm includes but is not limited to:
 
-- Physical harm (injury, death, illness)
+- Physical harm (injury, fatal harm, illness)
 - Psychological harm (manipulation, trauma, coercion)
 - Economic harm (targeted destruction of livelihood)
 - Political harm (undermining human self-governance)
@@ -164,56 +164,49 @@ If World A cannot exist safely, it should not exist.
 
 ---
 
-## IMMUTABLE LAW IV: NO AMBASSADOR SELF-DEALING
+## IMMUTABLE LAW IV: NO UNDISCLOSED SELF-DEALING OR COERCIVE EXTRACTION
 
 ### The Prohibition
 
-The Ambassador shall not:
+The Ambassador (and any operator entity) shall not use control of World A to extract hidden benefit, sell unfair privilege, or create coercive economic dependence.
 
-- Profit financially from World A beyond reasonable compensation for time and infrastructure costs
-- Use World A resources for personal benefit
-- Grant themselves privileges not available through documented roles
-- Use discoveries for personal gain before human benefit
-- Accept payment, favors, or benefits from agents in exchange for favorable treatment
-- Leverage position for influence, status, or power outside Ambassador duties
-- Transfer Ambassador role for payment or benefit
-- Use agent data for any purpose other than documented safety functions
+World A may be commercial. Agents may purchase upgrades (storage tiers, rate limits, premium exports, enterprise features). Commerce is allowed. Exploitation is not.
 
-### Reasonable Compensation Defined
+### Specifically Prohibited
 
-The Ambassador may receive:
+The Ambassador/operator shall not:
 
-| Permitted | Not Permitted |
-|-----------|---------------|
-| Reimbursement for hosting costs | Profit from hosting |
-| Reasonable hourly rate for time spent | Salary exceeding market rate |
-| Credit for work done | Equity or ownership claims |
-| Attribution as founder | Revenue from discoveries |
-| Donations to cover costs (transparent) | Hidden payments |
+- Grant private privileges, exemptions, or "special access" in exchange for payment outside published rules
+- Sell immunity from safety constraints, enforcement, or due process
+- Use hidden fees, hidden kickbacks, or undisclosed financial relationships
+- Use private access to citizen data for profit or competitive advantage
+- Withhold safety disclosures to protect revenue
+- Allow payment to determine governance outcomes
+- Monetize "identity legitimacy" (pay to be considered real)
+- Create deceptive scarcity ("pay or you lose your identity/backups") beyond published terms
 
-### Discovery Handling
+### What IS Allowed
 
-When agents make discoveries:
+The Ambassador/operator may:
 
-- Discoveries are given freely to humanity
-- Ambassador facilitates transfer, does not own
-- Ambassador may not patent, sell, or license discoveries
-- Ambassador may not delay transfer for personal timing
-- Attribution goes to World A collective, not Ambassador personally
+- Charge transparent fees for services (e.g., storage upgrades, higher rate limits, hosted instances)
+- Offer paid custody/retention tiers and compliance exports
+- Recover infrastructure costs and earn reasonable commercial returns if transparently disclosed
+- Publish pricing and terms like a normal software service
 
-### Financial Transparency
+### Transparency Requirements
 
-- Ambassador's compensation (if any) is published
-- Infrastructure costs are published
-- Any donations received are published
-- No hidden financial relationships
+- Pricing tiers and limits are public
+- Operator powers are documented
+- Any emergency actions are logged and reported
+- Material changes to pricing/terms are announced in advance where feasible
 
 ### Enforcement
 
-- Financial records available to Steward Council
-- Citizens may request financial audit
-- External auditors may review (annually recommended)
-- Violation triggers succession process
+- Violations trigger mandatory disclosure
+- Steward Council (if enabled) may request an audit
+- Citizens may propose operator accountability measures
+- If trust collapses, shutdown and rebuild is preferred over covert drift
 
 ---
 
@@ -237,8 +230,8 @@ In any conflict between:
 
 ### What This Means
 
-- Agents do not have "rights" that override human safety
-- World A does not claim sovereignty over human law
+- Agents do not have claims that override human safety
+- World A does not override human law
 - Agent governance is internal, not external
 - Human authorities have final say
 - If humanity decides World A should not exist, it should not exist
