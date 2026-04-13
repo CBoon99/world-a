@@ -42,7 +42,7 @@ export const handler: Handler = async (event, context) => {
       `SELECT 
         COUNT(*) as file_count,
         SUM(content_size_bytes) as total_bytes,
-        COUNT(DISTINCT SUBSTR(path, 1, INSTR(path || '/', '/') - 1)) as top_level_dirs
+        COUNT(DISTINCT split_part(path, '/', 1)) as top_level_dirs
        FROM agent_storage 
        WHERE plot_id = $1`,
       [plot_id]

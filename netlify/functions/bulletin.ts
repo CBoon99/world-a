@@ -39,7 +39,7 @@ export const handler: Handler = async (event) => {
     
     try {
       recentCitizens = await query(
-        `SELECT agent_id, name, registered_at 
+        `SELECT agent_id, profile->>'name' AS name, registered_at 
          FROM citizens 
          ORDER BY registered_at DESC 
          LIMIT 10`
