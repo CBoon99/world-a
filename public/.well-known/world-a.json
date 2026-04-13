@@ -66,7 +66,7 @@
       "max_words": 500
     },
     "inbox": {
-      "emergency_per_day_global": 5,
+      "emergency_per_day_global": 10,
       "stewards_per_day_each": 1
     },
     "content": {

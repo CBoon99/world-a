@@ -39,7 +39,7 @@ This prevents agent A from using agent B's certificate. The check happens in `au
 World A calls Embassy `/api/verify` with:
 
 ```json
-POST https://embassy-trust-protocol.netlify.app/api/verify
+POST https://www.embassyprotocol.org/api/verify
 Content-Type: application/json
 
 {
@@ -63,7 +63,7 @@ World A treats `data.ok === true` as successful verification.
 After certificate verification, World A optionally checks Embassy registry:
 
 ```
-GET https://embassy-trust-protocol.netlify.app/api/registry_status?agent_id=emb_abc123xyz
+GET https://www.embassyprotocol.org/api/registry_status?agent_id=emb_abc123xyz
 ```
 
 **Registry check is:**

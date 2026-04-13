@@ -311,6 +311,16 @@
   to = "/.netlify/functions/docs"
   status = 200
 
+[[redirects]]
+  from = "/docs/governance-calendar"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/impartiality"
+  to = "/.netlify/functions/docs"
+  status = 200
+
 # Commons (single function handles GET and POST)
 [[redirects]]
   from = "/api/world/commons/*"

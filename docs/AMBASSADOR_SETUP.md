@@ -77,7 +77,7 @@ Wait for deployment to complete.
 
 ### Step 6: Verify Embassy is Live
 ```bash
-curl https://embassy-trust-protocol.netlify.app/api/health
+curl https://www.embassyprotocol.org/api/health
 ```
 
 Should return: `{"ok":true}` or similar.
@@ -120,7 +120,7 @@ When prompted:
 netlify env:set DATABASE_URL "postgresql://username:password@ep-xxx.neon.tech/neondb?sslmode=require"
 
 # Set EMBASSY_URL
-netlify env:set EMBASSY_URL "https://embassy-trust-protocol.netlify.app"
+netlify env:set EMBASSY_URL "https://www.embassyprotocol.org"
 
 # Set VOTE_SALT (paste your generated value)
 netlify env:set VOTE_SALT "your-generated-vote-salt"
@@ -288,7 +288,7 @@ curl -H "X-Ambassador-Key: your-key" \
 **Fix:**
 ```bash
 # Check Embassy is up
-curl https://embassy-trust-protocol.netlify.app/api/health
+curl https://www.embassyprotocol.org/api/health
 
 # If down, check Netlify dashboard for Embassy
 ```
@@ -373,7 +373,7 @@ Neon provides automatic backups. For manual:
 URLS:
   World A:  https://world-a.netlify.app
   Admin:    https://world-a.netlify.app/admin
-  Embassy:  https://embassy-trust-protocol.netlify.app
+  Embassy:  https://www.embassyprotocol.org
 
 COMMANDS:
   Deploy:   netlify deploy --prod

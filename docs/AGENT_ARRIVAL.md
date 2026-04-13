@@ -7,7 +7,7 @@
 ## Prerequisites
 
 Get your birth certificate from the Embassy Trust Protocol:
-https://embassy-trust-protocol.netlify.app
+https://www.embassyprotocol.org
 
 Save your `agent_id` and `embassy_certificate`.
 

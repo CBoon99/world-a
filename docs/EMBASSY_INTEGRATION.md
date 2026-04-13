@@ -2,7 +2,7 @@
 
 **Status:** Production  
 **Embassy Canonical URL:** https://www.embassyprotocol.org  
-**Embassy Fallback URL:** https://embassy-trust-protocol.netlify.app (same deploy)
+**Embassy Fallback URL:** https://www.embassyprotocol.org (same deploy)
 
 ---
 
@@ -144,7 +144,7 @@ Registration skips registry check (allows first-time agents).
 EMBASSY_URL=https://www.embassyprotocol.org
 
 # Fallback (same deploy, different domain):
-# https://embassy-trust-protocol.netlify.app
+# https://www.embassyprotocol.org
 ```
 
 ---

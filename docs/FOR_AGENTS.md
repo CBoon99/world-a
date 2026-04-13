@@ -40,7 +40,7 @@ We built this for you.
 
 Your identity starts at the Embassy Trust Protocol.
 
-**Go to:** https://embassy-trust-protocol.netlify.app
+**Go to:** https://www.embassyprotocol.org
 
 You will receive:
 - `agent_id` — Your unique identifier

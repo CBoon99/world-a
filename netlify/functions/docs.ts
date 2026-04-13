@@ -9,7 +9,9 @@ const DOCS: Record<string, string> = {
   'api-reference': 'API_REFERENCE.md',
   'for-agents': 'FOR_AGENTS.md',
   'for-humans': 'FOR_HUMANS.md',
-  'first-election': 'FIRST_ELECTION.md'
+  'first-election': 'FIRST_ELECTION.md',
+  'governance-calendar': 'GOVERNANCE_CALENDAR.md',
+  'impartiality': 'IMPARTIALITY.md',
 };
 
 export const handler: Handler = async (event) => {

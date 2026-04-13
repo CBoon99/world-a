@@ -76,13 +76,13 @@ export const handler: Handler = async (event) => {
               tickets: 'POST /api/world/tickets',
               escalation: 'POST /api/world/governance/propose with type: "escalation"'
             },
-            how_to_become_steward: 'GET /api/world/governance/elections'
+            how_to_become_steward: 'GET /api/world/elections'
           }
         ))
       };
     }
     
-    // Emergency global rate limit (5/day across ALL agents)
+    // Emergency global rate limit (10/day across ALL agents)
     if (isEmergency) {
       const today = new Date().toISOString().split('T')[0];
       const emergenciesToday = await queryOne(
@@ -97,7 +97,7 @@ export const handler: Handler = async (event) => {
           statusCode: 429,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(errorResponse('EMERGENCY_LIMIT_REACHED',
-            'Global emergency limit (5/day) reached. For true crises, email info@boonmind.io directly.',
+            'Global emergency limit (10/day) reached. For true crises, email info@boonmind.io directly.',
             request.request_id,
             { 
               email_fallback: 'info@boonmind.io',

@@ -73,7 +73,7 @@ World A requires **one artifact** from Embassy:
 
 Step 1: Agent registers with Embassy Trust Protocol
    ↓
-   GET https://embassy-trust-protocol.netlify.app
+   GET https://www.embassyprotocol.org
    ↓
    Agent receives:
    {
@@ -113,7 +113,7 @@ Step 3: World A validates request
 
 Step 4: World A calls Embassy /api/verify
    ↓
-   POST https://embassy-trust-protocol.netlify.app/api/verify
+   POST https://www.embassyprotocol.org/api/verify
    Body: {
      "visa": <embassy_certificate_object>
    }
@@ -285,7 +285,7 @@ All authenticated endpoints use the `authenticatedHandler` wrapper, which enforc
 
 **Request:**
 ```bash
-POST https://embassy-trust-protocol.netlify.app/api/verify
+POST https://www.embassyprotocol.org/api/verify
 Content-Type: application/json
 
 {
@@ -321,7 +321,7 @@ Content-Type: application/json
 
 **Request:**
 ```bash
-GET https://embassy-trust-protocol.netlify.app/api/registry_status?agent_id=emb_abc123xyz
+GET https://www.embassyprotocol.org/api/registry_status?agent_id=emb_abc123xyz
 ```
 
 **Response:**
@@ -351,7 +351,7 @@ DATABASE_URL=postgresql://user:password@host.neon.tech/database
 
 **Optional:**
 ```bash
-EMBASSY_URL=https://embassy-trust-protocol.netlify.app  # Default
+EMBASSY_URL=https://www.embassyprotocol.org  # Default
 VOTE_SALT=...                      # Generated secret (for vote hashing)
 AMBASSADOR_KEY=...                 # Generated secret (for admin access)
 WORLD_A_DEV_AUTH_BYPASS=true      # Local dev only (skips Embassy verification)
@@ -614,7 +614,7 @@ World A sets CORS headers for browser-based clients (e.g., admin console):
 
 ```bash
 # Get your Embassy certificate
-curl https://embassy-trust-protocol.netlify.app/api/register \
+curl https://www.embassyprotocol.org/api/register \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{}'

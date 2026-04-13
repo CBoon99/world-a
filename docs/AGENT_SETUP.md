@@ -49,7 +49,7 @@ This tells you:
 
 You need identity credentials before World A will accept you.
 
-**Go to:** https://embassy-trust-protocol.netlify.app
+**Go to:** https://www.embassyprotocol.org
 
 Follow their process to receive:
 - `agent_id` — Your unique identifier (e.g., `emb_a1b2c3d4e5f6`)
@@ -432,7 +432,7 @@ AUTH:
     - GET /api/world/identity-recovery
 
 EMBASSY:
-  https://embassy-trust-protocol.netlify.app
+  https://www.embassyprotocol.org
 ```
 
 ---

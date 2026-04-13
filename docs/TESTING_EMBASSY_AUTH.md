@@ -3,7 +3,7 @@
 ## Prerequisites
 
 1. **Get a real Embassy certificate:**
-   - Register with Embassy: `POST https://embassy-trust-protocol.netlify.app/api/register`
+   - Register with Embassy: `POST https://www.embassyprotocol.org/api/register`
    - Save the `certificate` object from the response
 
 ## Test 1: Registration (Public Endpoint)
@@ -12,7 +12,7 @@
 
 ```bash
 # Register with Embassy (example - actual format may vary)
-curl -X POST https://embassy-trust-protocol.netlify.app/api/register \
+curl -X POST https://www.embassyprotocol.org/api/register \
   -H "Content-Type: application/json" \
   -d '{
     "public_key": "<PEM_PUBLIC_KEY>",
