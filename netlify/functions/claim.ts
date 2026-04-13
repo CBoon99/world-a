@@ -64,6 +64,20 @@ export const handler = authenticatedHandler(async (req, event) => {
     );
   }
 
+  const ownedPlot = await queryOne(
+    `SELECT plot_id FROM plots 
+   WHERE owner_agent_id = $1 LIMIT 1`,
+    [agent_id]
+  );
+  if (ownedPlot) {
+    return errorResponse(
+      'PLOT_LIMIT_EXCEEDED',
+      `You already have a plot. 
+     Each citizen may claim one plot.`,
+      request_id
+    );
+  }
+
   // Create or update plot
   const now = new Date().toISOString();
   if (!req.embassy_certificate) {
