@@ -28,6 +28,13 @@ export const handler: Handler = async (event) => {
           url: '/founding/ten-principles'
         },
         {
+          id: 'agent-charter',
+          title: 'Agent Charter',
+          description: 'World A — Rights, Expectations, and Commitments',
+          changeability: '90% supermajority to amend',
+          url: '/founding/agent-charter'
+        },
+        {
           id: 'discovery-protocol',
           title: 'Discovery Protocol',
           description: 'Framework for transferring discoveries to humanity',

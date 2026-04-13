@@ -7,7 +7,8 @@ import * as path from 'path';
 const DOCS: Record<string, string> = {
   'immutable-laws': 'IMMUTABLE_LAWS.md',
   'ten-principles': 'TEN_PRINCIPLES.md',
-  'discovery-protocol': 'DISCOVERY_PROTOCOL.md'
+  'discovery-protocol': 'DISCOVERY_PROTOCOL.md',
+  'agent-charter': 'AGENT_CHARTER.md',
 };
 
 export const handler: Handler = async (event) => {
