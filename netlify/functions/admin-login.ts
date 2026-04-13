@@ -32,22 +32,21 @@ export const handler: Handler = async (event) => {
       [createHash('sha256').update(token).digest('hex'), email, expires]
     );
     
-    // In production, send email. For now, log it.
+    // In production, send email. For now, log only in local Netlify dev.
     const loginUrl = `https://world-a.netlify.app/api/admin/login/verify?token=${token}`;
-    console.log(`Magic link for ${email}: ${loginUrl}`);
-    
+    if (process.env.NETLIFY_DEV === 'true') {
+      console.log(`Magic link for ${email}: ${loginUrl}`);
+    }
+
     // TODO: Send actual email via SendGrid/Resend/etc
-    // For now, also return in response (REMOVE IN PRODUCTION)
-    
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        ok: true, 
+      body: JSON.stringify({
+        ok: true,
         message: 'Magic link sent to your email',
-        // REMOVE THIS IN PRODUCTION:
-        _dev_link: loginUrl
-      })
+      }),
     };
   }
   
