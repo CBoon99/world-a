@@ -23,7 +23,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   if (!data || !data.coordinates) {
     return errorResponse(
       'invalid_request',
-      'Missing coordinates in request data. Expected format: { "data": { "coordinates": { "x": 0, "y": 0 } } }',
+      'coordinates required in request body. Expected: { "agent_id": "...", "embassy_certificate": {...}, "coordinates": { "x": 0, "y": 0 } }',
       request_id
     );
   }
@@ -34,7 +34,7 @@ export const handler = authenticatedHandler(async (req, event) => {
   if (typeof x !== 'number' || typeof y !== 'number') {
     return errorResponse(
       'invalid_request',
-      'Coordinates must be numbers. Expected format: { "data": { "coordinates": { "x": 0, "y": 0 } } }',
+      'Coordinates must be numbers. Use the same JSON body shape with numeric x and y in coordinates.',
       request_id
     );
   }

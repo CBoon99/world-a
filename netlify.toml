@@ -36,6 +36,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/world/plots/abandon"
+  to = "/.netlify/functions/plot-abandon"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/plots/available"
+  to = "/.netlify/functions/plots-available"
+  status = 200
+
+[[redirects]]
   from = "/api/world/plots/*"
   to = "/.netlify/functions/plot"
   status = 200
@@ -63,11 +73,6 @@
 [[redirects]]
   from = "/api/world/storage/usage"
   to = "/.netlify/functions/storage-usage"
-  status = 200
-
-[[redirects]]
-  from = "/api/world/plots/available"
-  to = "/.netlify/functions/plots-available"
   status = 200
 
 [[redirects]]
@@ -374,12 +379,6 @@
 [[redirects]]
   from = "/api/world/tickets/*/respond"
   to = "/.netlify/functions/ticket-respond"
-  status = 200
-
-# Plot abandonment
-[[redirects]]
-  from = "/api/world/plots/abandon"
-  to = "/.netlify/functions/plot-abandon"
   status = 200
 
 # Admin endpoints
