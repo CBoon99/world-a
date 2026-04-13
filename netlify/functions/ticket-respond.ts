@@ -1,12 +1,17 @@
 // Purpose: Ambassador responds to tickets
 
 import { Handler } from '@netlify/functions';
+import { corsPreflightResponse } from '../../lib/middleware';
 import { queryOne, execute, initDatabase } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
 const VALID_STATUSES = ['open', 'acknowledged', 'in_progress', 'resolved', 'wontfix', 'duplicate'];
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   try {
     await initDatabase();
     

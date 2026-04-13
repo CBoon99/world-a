@@ -3,10 +3,15 @@
 // Creates a response the agent can retrieve
 
 import { Handler } from '@netlify/functions';
+import { corsPreflightResponse } from '../../lib/middleware';
 import { queryOne, execute, initDatabase } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   try {
     await initDatabase();
     

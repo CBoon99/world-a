@@ -2,10 +2,14 @@
 // POST /api/world/notifications/:id/read - Requires auth
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { queryOne, execute, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   try {
     await initDatabase();
     

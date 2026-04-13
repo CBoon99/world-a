@@ -1,10 +1,14 @@
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { initDatabase, execute, queryOne } from '../../lib/db';
 import { calculateGratitudeDueBy } from '../../lib/civility';
 import crypto from 'crypto';
 
 export const handler: Handler = async (event, context) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   await initDatabase();
   try {
     // Parse and authenticate request

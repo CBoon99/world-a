@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { corsPreflightResponse } from '../../lib/middleware';
 import { execute, queryOne, initDatabase } from '../../lib/db';
 import { randomBytes, createHash } from 'crypto';
 
@@ -7,6 +8,10 @@ const TOKEN_EXPIRY_MINUTES = 15;
 const SESSION_EXPIRY_HOURS = 24;
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   await initDatabase();
   
   // POST /api/admin/login — Request magic link

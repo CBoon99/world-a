@@ -1,9 +1,13 @@
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { initDatabase, queryOne, execute } from '../../lib/db';
 import { getStorage } from '../../lib/storage';
 
 export const handler: Handler = async (event, context) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   await initDatabase();
   try {
     if (event.httpMethod !== 'DELETE') {

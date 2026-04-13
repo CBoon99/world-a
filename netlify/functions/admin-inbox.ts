@@ -1,8 +1,13 @@
 import { Handler } from '@netlify/functions';
+import { corsPreflightResponse } from '../../lib/middleware';
 import { authenticateAdmin } from '../../lib/admin-auth';
 import { query, queryOne, execute, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   await initDatabase();
   
   const auth = await authenticateAdmin(event);

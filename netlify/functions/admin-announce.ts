@@ -1,9 +1,14 @@
 import { Handler } from '@netlify/functions';
+import { corsPreflightResponse } from '../../lib/middleware';
 import { authenticateAdmin } from '../../lib/admin-auth';
 import { execute, initDatabase } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return corsPreflightResponse(event);
+  }
+
   await initDatabase();
   
   if (event.httpMethod !== 'POST') {
