@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
 import { initDatabase, execute, queryOne } from '../../lib/db';
 import { calculateGratitudeDueBy } from '../../lib/civility';
 import crypto from 'crypto';
@@ -118,14 +118,18 @@ export const handler: Handler = async (event, context) => {
         timestamp: now,
       }, request.request_id)),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
+    const isAgentOnly = errMsg.startsWith('AGENT_ONLY');
     return {
-      statusCode: error.message?.startsWith('AGENT_ONLY') ? 403 : 400,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ok: false,
-        error: error.message || 'Internal server error',
-      }),
+      statusCode: isAgentOnly ? 403 : 400,
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(
+        errorResponse(isAgentOnly ? 'AGENT_ONLY' : 'INTERNAL_ERROR', errMsg)
+      ),
     };
   }
 };
