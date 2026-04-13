@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, corsPreflightResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
 import { initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event, context) => {
@@ -50,6 +50,7 @@ export const handler: Handler = async (event, context) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({
         ok: true,

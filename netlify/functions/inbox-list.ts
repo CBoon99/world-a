@@ -3,6 +3,7 @@
 // This is for YOU to read messages, not for agents
 
 import { Handler } from '@netlify/functions';
+import { getCorsHeaders } from '../../lib/middleware';
 import { query, queryOne, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
@@ -39,7 +40,7 @@ export const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify({
         ok: true,
         messages,

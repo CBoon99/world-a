@@ -64,7 +64,7 @@ export const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify(successResponse({
         notification_id,
         read: true

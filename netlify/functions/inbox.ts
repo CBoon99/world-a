@@ -169,7 +169,7 @@ export const handler: Handler = async (event) => {
       const resetTime = new Date(new Date(existing.sent_at).getTime() + RATE_LIMIT_HOURS * 60 * 60 * 1000);
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
         body: JSON.stringify(successResponse({
           ok: true,
           message_id: existing.message_id,
@@ -268,7 +268,7 @@ export const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify(successResponse({
         ok: true,
         message_id,

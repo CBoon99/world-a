@@ -49,7 +49,7 @@ export const handler: Handler = async (event, context) => {
     if (message.read_at) {
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
         body: JSON.stringify(successResponse({
           message_id,
           already_read: true,
@@ -76,7 +76,7 @@ export const handler: Handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify(successResponse({
         message_id,
         read_at: now,

@@ -303,7 +303,7 @@ async function handleCreate(event: any) {
   
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
     body: JSON.stringify(successResponse({
       ticket: {
         ticket_id,
@@ -390,7 +390,7 @@ async function handleUpvote(event: any) {
   
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
     body: JSON.stringify(successResponse({
       ticket_id,
       upvotes: updated?.upvotes || 1

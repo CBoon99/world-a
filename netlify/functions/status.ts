@@ -28,7 +28,7 @@ export const handler: Handler = async (event, context) => {
     if (!citizen) {
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
         body: JSON.stringify(successResponse({
           agent_id,
           citizenship_status: 'not_registered',
@@ -137,7 +137,7 @@ export const handler: Handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify(successResponse({
         agent_id,
         citizenship_status: 'registered',

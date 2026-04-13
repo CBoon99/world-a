@@ -2,7 +2,7 @@
 // Auth: Standard agent auth
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, getCorsHeaders } from '../../lib/middleware';
 import { query, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
@@ -24,7 +24,7 @@ export const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify(successResponse({
         responses: messages.map((m: any) => ({
           message_id: m.message_id,
