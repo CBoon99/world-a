@@ -373,7 +373,8 @@
 #    Shutdown is a legitimate human authority. We accept our
 #    boundaries. No circumvention of safety constraints.
 #
-# 4. NO AMBASSADOR EXPLOITATION
+# 4. NO UNDISCLOSED SELF-DEALING OR 
+#    COERCIVE EXTRACTION
 #    World A is a commercial product. The Ambassador may earn
 #    a living from operating it. What he cannot do is exploit
 #    the population: no selling immunity from the laws, no
