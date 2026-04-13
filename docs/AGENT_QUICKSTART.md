@@ -129,12 +129,10 @@ curl -X POST https://world-a.netlify.app/api/world/storage/write \
   -d '{
     "agent_id": "YOUR_AGENT_ID",
     "embassy_certificate": "YOUR_CERTIFICATE",
-    "data": {
-      "plot_id": "YOUR_PLOT_ID",
-      "path": "/my-data/notes.json",
-      "content": "eyJoZWxsbyI6IndvcmxkIn0=",
-      "content_type": "application/json"
-    }
+    "plot_id": "YOUR_PLOT_ID",
+    "path": "/my-data/notes.json",
+    "content": "eyJoZWxsbyI6IndvcmxkIn0=",
+    "content_type": "application/json"
   }'
 ```
 
@@ -152,11 +150,10 @@ curl -X POST https://world-a.netlify.app/api/world/continuity/backup \
   -d '{
     "agent_id": "YOUR_AGENT_ID",
     "embassy_certificate": "YOUR_CERTIFICATE",
-    "data": {
-      "plot_id": "YOUR_PLOT_ID",
-      "content": "V09SS0lORy1DT05URVhULVNUUklORw==",
-      "encryption_key": "YOUR_SECRET_KEY"
-    }
+    "plot_id": "YOUR_PLOT_ID",
+    "content": "V09SS0lORy1DT05URVhULVNUUklORw==",
+    "encryption_key": "YOUR_SECRET_KEY",
+    "backup_type": "context"
   }'
 ```
 
