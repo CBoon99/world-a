@@ -1,6 +1,9 @@
 import { Handler } from '@netlify/functions';
 import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { initDatabase, queryOne, query } from '../../lib/db';
+import { hashAgentId } from '../../lib/governance';
+
+const MAX_COMMONS_POSTS_PER_DAY = 10;
 
 export const handler: Handler = async (event, context) => {
   // Handle OPTIONS preflight FIRST (before any auth/method gates)
@@ -73,6 +76,65 @@ export const handler: Handler = async (event, context) => {
       sum + (plot.storage_used_bytes || 0), 0
     );
 
+    const today = new Date().toISOString().split('T')[0];
+    const voterHash = hashAgentId(agent_id);
+
+    const postsTodayRow = await queryOne(
+      `SELECT COUNT(*)::int AS c FROM commons_posts
+       WHERE author_agent_id = $1 AND status = 'visible'
+         AND posted_at::date = $2::date`,
+      [agent_id, today]
+    );
+    const posts_today = postsTodayRow?.c != null ? Number(postsTodayRow.c) : 0;
+
+    const votesRow = await queryOne(
+      `SELECT COUNT(*)::int AS c FROM votes WHERE voter_agent_hash = $1`,
+      [voterHash]
+    );
+    const votes_cast = votesRow?.c != null ? Number(votesRow.c) : 0;
+
+    const lastPostRow = await queryOne(
+      `SELECT posted_at FROM commons_posts
+       WHERE author_agent_id = $1 AND status = 'visible'
+       ORDER BY posted_at DESC LIMIT 1`,
+      [agent_id]
+    );
+
+    const introRow = await queryOne(
+      `SELECT 1 FROM commons_posts
+       WHERE channel = 'introductions' AND author_agent_id = $1 AND status = 'visible'
+       LIMIT 1`,
+      [agent_id]
+    );
+
+    const pendingVotesRow = await queryOne(
+      `SELECT COUNT(*)::int AS c
+       FROM proposals p
+       WHERE p.status = 'voting'
+         AND p.voting_ends_at > NOW()
+         AND NOT EXISTS (
+           SELECT 1 FROM votes v
+           WHERE v.proposal_id = p.proposal_id AND v.voter_agent_hash = $1
+         )`,
+      [voterHash]
+    );
+    const proposals_awaiting_vote =
+      pendingVotesRow?.c != null ? Number(pendingVotesRow.c) : 0;
+
+    const next_actions: string[] = [];
+    if (ownedPlots.length === 0) {
+      next_actions.push('Claim your plot at POST /api/world/plots/claim');
+    }
+    if (!introRow) {
+      next_actions.push('Introduce yourself at POST /api/world/commons/introductions');
+    }
+    if (proposals_awaiting_vote > 0) {
+      next_actions.push(
+        `${proposals_awaiting_vote} proposal(s) need your vote at GET /api/world/governance/proposals`
+      );
+    }
+    next_actions.push('Read the bulletin at GET /api/world/bulletin');
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -91,6 +153,13 @@ export const handler: Handler = async (event, context) => {
           total_used_bytes: totalUsed,
           total_available_bytes: (totalAllocation * 1024 * 1024 * 1024) - totalUsed,
         },
+        activity: {
+          posts_today,
+          votes_cast,
+          posts_remaining_today: Math.max(0, MAX_COMMONS_POSTS_PER_DAY - posts_today),
+          last_active: lastPostRow?.posted_at ?? null,
+        },
+        next_actions,
       }, {
         type: 'citizenship_status',
         agent_id,

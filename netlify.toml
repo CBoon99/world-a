@@ -91,6 +91,21 @@
   status = 200
 
 [[redirects]]
+  from = "/api/world/citizens/:agent_id"
+  to = "/.netlify/functions/citizen-profile"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/feed"
+  to = "/.netlify/functions/feed"
+  status = 200
+
+[[redirects]]
+  from = "/api/world/search"
+  to = "/.netlify/functions/search"
+  status = 200
+
+[[redirects]]
   from = "/api/world/continuity/backup"
   to = "/.netlify/functions/continuity-backup"
   status = 200
