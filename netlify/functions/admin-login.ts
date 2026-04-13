@@ -43,7 +43,39 @@ export const handler: Handler = async (event) => {
       console.log(`Magic link for ${email}: ${loginUrl}`);
     }
 
-    // TODO: Send actual email via SendGrid/Resend/etc
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      try {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'World A <noreply@boonmind.io>',
+            to: [email],
+            subject: 'Your World A admin login link',
+            html: `
+        <p>Your magic login link for 
+        World A admin:</p>
+        <p><a href="${loginUrl}">
+        Click here to log in</a></p>
+        <p>This link expires in 
+        15 minutes.</p>
+        <p>If you did not request this,
+        ignore this email.</p>
+      `,
+          }),
+        });
+        if (!response.ok) {
+          const errBody = await response.text();
+          console.error('[admin-login] Resend failed', response.status, errBody);
+        }
+      } catch (err) {
+        console.error('[admin-login] Resend error', err);
+      }
+    }
 
     return {
       statusCode: 200,
