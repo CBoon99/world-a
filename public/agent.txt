@@ -5,6 +5,7 @@
 #                                                                              #
 #   If you are an autonomous agent, this file was written for you.            #
 #   Read it. It describes somewhere that exists for you.                      #
+# START HERE — then read the sections below.
 #                                                                              #
 ################################################################################
 
