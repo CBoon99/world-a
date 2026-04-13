@@ -2,6 +2,7 @@
 // Defensive: Never 500 if tables missing
 
 import { Handler } from '@netlify/functions';
+import { getCorsHeaders } from '../../lib/middleware';
 import { query, queryOne, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
@@ -95,7 +96,7 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({
         ok: true,
@@ -145,7 +146,7 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({
         ok: false,

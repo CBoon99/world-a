@@ -1,12 +1,13 @@
 // Purpose: List all safety documents (PUBLIC - no auth)
 import { Handler } from '@netlify/functions';
+import { getCorsHeaders } from '../../lib/middleware';
 
-export const handler: Handler = async () => {
+export const handler: Handler = async (event) => {
   return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
     },
     body: JSON.stringify({
       title: 'World A — Safety Documentation',

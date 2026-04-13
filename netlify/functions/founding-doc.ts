@@ -1,5 +1,6 @@
 // Purpose: Serve founding documents as markdown (PUBLIC - no auth)
 import { Handler } from '@netlify/functions';
+import { getCorsHeaders } from '../../lib/middleware';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -20,7 +21,7 @@ export const handler: Handler = async (event) => {
       statusCode: 404,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
         'Cache-Control': 'no-cache'
       },
       body: JSON.stringify({
@@ -42,7 +43,7 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
         'Cache-Control': 'public, max-age=3600'
       },
       body: content
@@ -57,7 +58,7 @@ export const handler: Handler = async (event) => {
         statusCode: 404,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
           'Cache-Control': 'no-cache'
         },
         body: JSON.stringify({
@@ -74,7 +75,7 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
         'Cache-Control': 'no-cache'
       },
       body: JSON.stringify({

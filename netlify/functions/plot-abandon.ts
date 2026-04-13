@@ -3,7 +3,7 @@
 // WARNING: All storage is deleted when plot is abandoned
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, getCorsHeaders } from '../../lib/middleware';
 import { queryOne, query, execute, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
@@ -14,9 +14,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 204,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
+          ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
         } as Record<string, string>,
         body: ''
       };

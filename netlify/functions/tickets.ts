@@ -5,7 +5,7 @@
 // POST /api/world/tickets/:id/upvote - Upvote ticket (auth required)
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
 import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
@@ -120,7 +120,7 @@ async function handleList(event: any) {
   
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
     body: JSON.stringify({
       ok: true,
       tickets,
@@ -150,7 +150,7 @@ async function handleGetOne(event: any) {
   
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
     body: JSON.stringify(successResponse({ ok: true, ticket }))
   };
 }

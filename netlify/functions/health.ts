@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { initDatabase, queryOne } from '../../lib/db';
-import { errorResponse } from '../../lib/middleware';
+import { errorResponse, getCorsHeaders } from '../../lib/middleware';
 
 export const handler: Handler = async (event, context) => {
   try {
@@ -33,7 +33,7 @@ export const handler: Handler = async (event, context) => {
       statusCode: healthy ? 200 : 503,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({
         ok: healthy,
@@ -69,7 +69,7 @@ export const handler: Handler = async (event, context) => {
       statusCode: 503,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify(errorResponse(
         'SERVICE_UNAVAILABLE',

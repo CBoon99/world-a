@@ -1,5 +1,6 @@
 // Purpose: Serve documentation as markdown (PUBLIC - no auth)
 import { Handler } from '@netlify/functions';
+import { getCorsHeaders } from '../../lib/middleware';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -25,7 +26,7 @@ export const handler: Handler = async (event) => {
       statusCode: 404,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({
         error: 'NOT_FOUND',
@@ -44,8 +45,8 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'public, max-age=3600',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       } as Record<string, string>,
       body: content
     };
@@ -58,7 +59,7 @@ export const handler: Handler = async (event) => {
         statusCode: 404,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
         },
         body: JSON.stringify({
           error: 'FILE_NOT_FOUND',
@@ -74,7 +75,7 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({ 
         error: 'READ_ERROR',

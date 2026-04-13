@@ -1,5 +1,5 @@
 import type { Handler } from '@netlify/functions';
-import { parseRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, successResponse, errorResponse, getCorsHeaders } from '../../lib/middleware';
 import { initDatabase, queryOne, execute, transaction } from '../../lib/db';
 import { verifyAgentCertificate } from '../../lib/embassy-client';
 import { randomUUID } from 'crypto';
@@ -17,10 +17,8 @@ import { randomUUID } from 'crypto';
 export const handler: Handler = async (event) => {
   // CORS headers
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json',
+    ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
   };
 
   // Handle OPTIONS

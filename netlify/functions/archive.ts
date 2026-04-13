@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getCorsHeaders } from '../../lib/middleware';
 import fs from 'fs';
 import path from 'path';
 
@@ -34,7 +35,7 @@ export const handler: Handler = async (event, context) => {
         statusCode: 404,
         headers: { 
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
         },
         body: JSON.stringify({
           ok: false,
@@ -49,16 +50,16 @@ export const handler: Handler = async (event, context) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: markdown,
     };
   } catch (error: any) {
     return {
       statusCode: 500,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
       body: JSON.stringify({
         ok: false,
