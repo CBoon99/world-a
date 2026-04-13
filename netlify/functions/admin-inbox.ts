@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { corsPreflightResponse } from '../../lib/middleware';
+import { corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
 import { authenticateAdmin } from '../../lib/admin-auth';
 import { query, queryOne, execute, initDatabase } from '../../lib/db';
 
@@ -40,7 +40,7 @@ export const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify({
         ok: true,
         messages: messages || [],
@@ -75,7 +75,7 @@ export const handler: Handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify({ ok: true, message_id, status: status || 'responded', responded_at: now })
     };
   }

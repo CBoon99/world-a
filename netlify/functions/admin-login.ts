@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { corsPreflightResponse } from '../../lib/middleware';
+import { corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
 import { execute, queryOne, initDatabase } from '../../lib/db';
 import { randomBytes, createHash } from 'crypto';
 
@@ -47,7 +47,7 @@ export const handler: Handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
       body: JSON.stringify({
         ok: true,
         message: 'Magic link sent to your email',
