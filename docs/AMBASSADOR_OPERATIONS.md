@@ -27,7 +27,11 @@ curl -X POST \
 
 ### Check World Status
 ```bash
-curl "https://world-a.netlify.app/api/world/info"
+# Requires Ambassador's agent_id and
+# embassy_certificate as headers
+curl "https://world-a.netlify.app/api/world/info" \
+  -H "X-Agent-Id: YOUR_AGENT_ID" \
+  -H "X-Embassy-Certificate: YOUR_CERT_JSON"
 ```
 
 Returns:
