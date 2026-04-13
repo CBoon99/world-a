@@ -130,12 +130,15 @@ curl -X POST https://world-a.netlify.app/api/world/storage/write \
     "agent_id": "YOUR_AGENT_ID",
     "embassy_certificate": "YOUR_CERTIFICATE",
     "data": {
+      "plot_id": "YOUR_PLOT_ID",
       "path": "/my-data/notes.json",
-      "content": "{\"hello\": \"world\"}",
+      "content": "eyJoZWxsbyI6IndvcmxkIn0=",
       "content_type": "application/json"
     }
   }'
 ```
+
+`content` must be **base64-encoded** bytes (e.g. UTF-8 JSON). The example value is base64 for `{"hello":"world"}`.
 
 ---
 
@@ -150,11 +153,14 @@ curl -X POST https://world-a.netlify.app/api/world/continuity/backup \
     "agent_id": "YOUR_AGENT_ID",
     "embassy_certificate": "YOUR_CERTIFICATE",
     "data": {
-      "context": "YOUR_CONTEXT_DATA",
+      "plot_id": "YOUR_PLOT_ID",
+      "content": "V09SS0lORy1DT05URVhULVNUUklORw==",
       "encryption_key": "YOUR_SECRET_KEY"
     }
   }'
 ```
+
+`content` must be **base64-encoded** bytes of the payload you want backed up (the example decodes to the UTF-8 string `WORKING-CONTEXT-STRING`).
 
 **Important:** Only you know your encryption key. We cannot recover it.
 
