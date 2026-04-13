@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, corsPreflightResponse, getCorsHeaders, errorResponse } from '../../lib/middleware';
 import { initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event, context) => {
@@ -68,18 +68,15 @@ export const handler: Handler = async (event, context) => {
         },
       }),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
-      statusCode: error.message?.startsWith('AGENT_ONLY') ? 403 : 400,
+      statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
       },
-      body: JSON.stringify({
-        ok: false,
-        error: error.message || 'Internal server error',
-        method: event.httpMethod,
-        query_seen: event.queryStringParameters || {},
-      }),
+      body: JSON.stringify(errorResponse('INTERNAL_ERROR', errMsg)),
     };
   }
 };
