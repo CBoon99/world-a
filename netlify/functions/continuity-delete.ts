@@ -6,6 +6,16 @@ import { getStorage } from '../../lib/storage';
 export const handler: Handler = async (event, context) => {
   await initDatabase();
   try {
+    if (event.httpMethod !== 'DELETE') {
+      return {
+        statusCode: 405,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          errorResponse('METHOD_NOT_ALLOWED', 'Use DELETE', undefined)
+        ),
+      };
+    }
+
     // Extract backup_id from path
     const pathMatch = event.path.match(/\/continuity\/([^\/]+)/);
     const backup_id = pathMatch ? pathMatch[1] : null;
