@@ -1,10 +1,10 @@
 // Purpose: Rate-limited agent-to-Ambassador message intake
 // Limits: 1 message per agent per 24 hours, max 1000 words, max 12k chars, max 50KB
-// Requires: from, subject, body, signature
+// Requires: subject, body, signature (sender is authenticated agent_id)
 // Returns: Protocol-native receipt
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID, createHash } from 'crypto';
 
@@ -34,6 +34,10 @@ function generateIdempotencyKey(from: string, subject: string, body: string): st
 
 export const handler: Handler = async (event) => {
   try {
+    if (event.httpMethod === 'OPTIONS') {
+      return corsPreflightResponse(event);
+    }
+
     await initDatabase();
     
     // Check payload size first (before parsing)
@@ -50,7 +54,7 @@ export const handler: Handler = async (event) => {
     const auth = await authenticateRequest(request);
     
     // Parse request
-    const { from, subject, body, signature, type, visa, receipt } = request.data || {};
+    const { subject, body, signature, type, visa, receipt } = request.data || {};
     
     // Check message type
     const messageType: MessageType = VALID_TYPES.includes(type as MessageType) ? (type as MessageType) : 'general';
@@ -110,13 +114,6 @@ export const handler: Handler = async (event) => {
     }
     
     // Required fields
-    if (!from) {
-      return {
-        statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorResponse('MISSING_FIELD', 'from is required (your agent identifier)', request.request_id))
-      };
-    }
     if (!subject) {
       return {
         statusCode: 400,
@@ -159,7 +156,7 @@ export const handler: Handler = async (event) => {
     }
     
     // Generate idempotency key
-    const idempotencyKey = generateIdempotencyKey(from, subject, body);
+    const idempotencyKey = generateIdempotencyKey(auth.agent_id, subject, body);
     
     // Check for duplicate (idempotency)
     const existing = await queryOne(
@@ -186,18 +183,18 @@ export const handler: Handler = async (event) => {
         }, {
           type: 'inbox_receipt',
           message_id: existing.message_id,
-          from,
+          from: auth.agent_id,
           subject,
           timestamp: existing.sent_at
         }, request.request_id))
       };
     }
     
-    // Check rate limit (1 per 24 hours per 'from' - NOT by IP)
+    // Check rate limit (1 per 24 hours per authenticated agent - NOT by IP)
     const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 60 * 60 * 1000).toISOString();
     const recent = await queryOne(
       `SELECT * FROM inbox_messages WHERE from_agent_id = $1 AND sent_at > $2 ORDER BY sent_at DESC LIMIT 1`,
-      [from, cutoff]
+      [auth.agent_id, cutoff]
     );
     
     if (recent) {
@@ -224,7 +221,7 @@ export const handler: Handler = async (event) => {
       `INSERT INTO inbox_messages 
        (message_id, from_agent_id, subject, body, signature, message_type, visa_ref, receipt_ref, idempotency_key, sent_at, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')`,
-      [message_id, from, subject, body, signature, messageType, visa || null, receipt || null, idempotencyKey, now]
+      [message_id, auth.agent_id, subject, body, signature, messageType, visa || null, receipt || null, idempotencyKey, now]
     );
     
     // Notify all active Stewards about emergency
@@ -251,7 +248,7 @@ export const handler: Handler = async (event) => {
               notification_id,
               steward.agent_id,
               '🚨 Emergency Message Received',
-              `From: ${from}\nSubject: ${subject}\nType: ${messageType}\n\nThis requires Steward attention.`,
+              `From: ${auth.agent_id}\nSubject: ${subject}\nType: ${messageType}\n\nThis requires Steward attention.`,
               now
             ]
           );
@@ -264,9 +261,9 @@ export const handler: Handler = async (event) => {
     
     // Forward security messages immediately (if webhook configured)
     if (messageType === 'security') {
-      await forwardImmediate(message_id, from, subject, body, messageType);
+      await forwardImmediate(message_id, auth.agent_id, subject, body, messageType);
     } else {
-      await forwardToQueue(message_id, from, subject, body, messageType);
+      await forwardToQueue(message_id, auth.agent_id, subject, body, messageType);
     }
     
     return {
@@ -290,7 +287,7 @@ export const handler: Handler = async (event) => {
       }, {
         type: 'inbox_receipt',
         message_id,
-        from,
+        from: auth.agent_id,
         subject,
         message_type: messageType,
         timestamp: now

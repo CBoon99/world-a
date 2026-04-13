@@ -5,7 +5,7 @@
 // POST /api/world/tickets/:id/upvote - Upvote ticket (auth required)
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
 import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
@@ -31,6 +31,10 @@ function getToday(): string {
 
 export const handler: Handler = async (event) => {
   try {
+    if (event.httpMethod === 'OPTIONS') {
+      return corsPreflightResponse(event);
+    }
+
     await initDatabase();
     
     const path = event.path;
