@@ -4,7 +4,7 @@
 // Returns: Protocol-native receipt
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, corsPreflightResponse, getCorsHeaders } from '../../lib/middleware';
 import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID, createHash } from 'crypto';
 
@@ -294,18 +294,25 @@ export const handler: Handler = async (event) => {
       }, request.request_id))
     };
     
-  } catch (error: any) {
-    if (error.message?.startsWith('AGENT_ONLY')) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
+    if (errMsg.startsWith('AGENT_ONLY')) {
       return {
         statusCode: 403,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorResponse('PERMISSION_DENIED', error.message))
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+        },
+        body: JSON.stringify(errorResponse('PERMISSION_DENIED', errMsg))
       };
     }
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(errorResponse('INTERNAL_ERROR', error.message))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('INTERNAL_ERROR', errMsg))
     };
   }
 };

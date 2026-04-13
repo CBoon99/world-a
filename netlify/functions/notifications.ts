@@ -2,10 +2,11 @@
 // GET /api/world/notifications - Requires auth
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, getCorsHeaders } from '../../lib/middleware';
 import { query, queryOne, initDatabase } from '../../lib/db';
 
 export const handler: Handler = async (event) => {
+  const origin = event.headers?.origin || event.headers?.Origin;
   try {
     await initDatabase();
     
@@ -14,11 +15,15 @@ export const handler: Handler = async (event) => {
     let auth;
     try {
       auth = await authenticateRequest(request);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
       return {
         statusCode: 401,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorResponse('UNAUTHORIZED', error.message || 'Invalid credentials'))
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(origin),
+        },
+        body: JSON.stringify(errorResponse('UNAUTHORIZED', errMsg || 'Invalid credentials'))
       };
     }
     
@@ -57,11 +62,15 @@ export const handler: Handler = async (event) => {
       }))
     };
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(errorResponse('INTERNAL_ERROR', error.message))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(origin),
+      },
+      body: JSON.stringify(errorResponse('INTERNAL_ERROR', errMsg))
     };
   }
 };

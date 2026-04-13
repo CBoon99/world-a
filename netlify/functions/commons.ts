@@ -3,7 +3,7 @@
 // POST /api/world/commons/:channel - Requires auth + rate limiting
 
 import { Handler } from '@netlify/functions';
-import { parseRequest, authenticateRequest, successResponse, errorResponse } from '../../lib/middleware';
+import { parseRequest, authenticateRequest, successResponse, errorResponse, getCorsHeaders } from '../../lib/middleware';
 import { query, queryOne, execute, initDatabase, ensureCitizen } from '../../lib/db';
 import { randomUUID } from 'crypto';
 
@@ -77,11 +77,15 @@ export const handler: Handler = async (event) => {
       };
     }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 500,
-      headers: withCors({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(errorResponse('INTERNAL_ERROR', error.message))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('INTERNAL_ERROR', errMsg))
     };
   }
 };
@@ -147,11 +151,15 @@ async function handlePost(event: any, channel: string) {
   try {
     auth = await authenticateRequest(request);
     agent_id = auth.agent_id;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 401,
-      headers: withCors({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(errorResponse('UNAUTHORIZED', error.message || 'Invalid credentials'))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('UNAUTHORIZED', errMsg || 'Invalid credentials'))
     };
   }
   
@@ -395,7 +403,6 @@ async function handlePost(event: any, channel: string) {
     statusCode: 200,
     headers: withCors({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(successResponse({
-      ok: true,
       post: {
         post_id,
         channel,

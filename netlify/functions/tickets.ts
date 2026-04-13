@@ -66,11 +66,15 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify(errorResponse('NOT_FOUND', 'Endpoint not found'))
     };
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(errorResponse('INTERNAL_ERROR', error.message))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('INTERNAL_ERROR', errMsg))
     };
   }
 };
@@ -151,7 +155,7 @@ async function handleGetOne(event: any) {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event.headers?.origin || event.headers?.Origin) },
-    body: JSON.stringify(successResponse({ ok: true, ticket }))
+    body: JSON.stringify(successResponse({ ticket }))
   };
 }
 
@@ -163,11 +167,15 @@ async function handleCreate(event: any) {
   try {
     auth = await authenticateRequest(request);
     agent_id = auth.agent_id;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(errorResponse('UNAUTHORIZED', error.message || 'Authentication required'))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('UNAUTHORIZED', errMsg || 'Authentication required'))
     };
   }
   
@@ -297,7 +305,6 @@ async function handleCreate(event: any) {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(successResponse({
-      ok: true,
       ticket: {
         ticket_id,
         category,
@@ -327,11 +334,15 @@ async function handleUpvote(event: any) {
   try {
     auth = await authenticateRequest(request);
     agent_id = auth.agent_id;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(errorResponse('UNAUTHORIZED', error.message || 'Authentication required'))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('UNAUTHORIZED', errMsg || 'Authentication required'))
     };
   }
   
@@ -381,7 +392,6 @@ async function handleUpvote(event: any) {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(successResponse({
-      ok: true,
       ticket_id,
       upvotes: updated?.upvotes || 1
     }))

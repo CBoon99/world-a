@@ -32,11 +32,15 @@ export const handler: Handler = async (event) => {
     let auth;
     try {
       auth = await authenticateRequest(request);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
       return {
         statusCode: 401,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorResponse('UNAUTHORIZED', error.message || 'Authentication required'))
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+        },
+        body: JSON.stringify(errorResponse('UNAUTHORIZED', errMsg || 'Authentication required'))
       };
     }
     
@@ -110,11 +114,15 @@ export const handler: Handler = async (event) => {
       }))
     };
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(errorResponse('INTERNAL_ERROR', error.message))
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(event.headers?.origin || event.headers?.Origin),
+      },
+      body: JSON.stringify(errorResponse('INTERNAL_ERROR', errMsg))
     };
   }
 };
