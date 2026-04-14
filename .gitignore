@@ -17,6 +17,7 @@ coverage/
 .netlify
 
 # Session artifacts (one-off reports/diagnostics — not product docs)
+WORLD_A_CURRENT_STATE_REPORT.md
 CODE_REVIEW_REPORT.md
 COMMONS_AUTH_FIX.md
 ENDPOINT_CONTRACTS_FIX.md
