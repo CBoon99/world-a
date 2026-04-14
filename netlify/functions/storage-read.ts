@@ -1,9 +1,10 @@
-import { authenticatedHandler, successResponse, errorResponse } from '../../lib/middleware';
+import { successResponse, errorResponse } from '../../lib/middleware';
+import { authenticatedHandlerV2 } from '../../lib/middleware-v2';
 import { initDatabase, queryOne } from '../../lib/db';
 import { checkPermission } from '../../lib/permissions';
 import { getStorage } from '../../lib/storage';
 
-export const handler = authenticatedHandler(async (req, event) => {
+export default authenticatedHandlerV2(async (req, event) => {
   await initDatabase();
   const { agent_id, data, request_id } = req;
 
