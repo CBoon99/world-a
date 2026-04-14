@@ -32,3 +32,8 @@ agent_audit_results.json
 
 # V2 Economy scratch (separate repo)
 World A v2/
+
+# Session artifacts (one-off reports/diagnostics — do not ship)
+docs/RUNBOOK_WORLD_A_OPERATIONS.md
+docs/WORLD_A_GAP_TO_WORKING_REPORT.md
+docs/WORLD_A_WORKING_STATUS_REPORT.md
