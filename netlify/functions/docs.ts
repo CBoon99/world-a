@@ -6,8 +6,11 @@ import * as path from 'path';
 
 const DOCS: Record<string, string> = {
   'agent-quickstart': 'AGENT_QUICKSTART.md',
+  'agent-terminal-quickstart': 'AGENT_TERMINAL_QUICKSTART.md',
   'ambassador-operations': 'AMBASSADOR_OPERATIONS.md',
   'api-reference': 'API_REFERENCE.md',
+  'auth-in-world-a': 'AUTH_IN_WORLD_A.md',
+  'embassy-integration': 'EMBASSY_INTEGRATION.md',
   'for-agents': 'FOR_AGENTS.md',
   'for-humans': 'FOR_HUMANS.md',
   'first-election': 'FIRST_ELECTION.md',

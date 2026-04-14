@@ -341,6 +341,21 @@
   to = "/.netlify/functions/docs"
   status = 200
 
+[[redirects]]
+  from = "/docs/embassy-integration"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/auth-in-world-a"
+  to = "/.netlify/functions/docs"
+  status = 200
+
+[[redirects]]
+  from = "/docs/agent-terminal-quickstart"
+  to = "/.netlify/functions/docs"
+  status = 200
+
 # Commons (single function handles GET and POST)
 [[redirects]]
   from = "/api/world/commons/*"
