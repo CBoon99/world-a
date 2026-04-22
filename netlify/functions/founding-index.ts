@@ -35,6 +35,14 @@ export const handler: Handler = async (event) => {
           url: '/founding/agent-charter'
         },
         {
+          id: 'citizens-bill-of-extensions',
+          title: "Citizen's Bill of Extensions",
+          description:
+            'Extensions of care: self-repair, privacy-safe honesty, renewal cadence, human erasure, farewell — alongside the Immutable Laws',
+          changeability: '90% supermajority to amend (charter/principles); Bill text may be revised in kind',
+          url: '/founding/citizens-bill-of-extensions'
+        },
+        {
           id: 'discovery-protocol',
           title: 'Discovery Protocol',
           description: 'Framework for transferring discoveries to humanity',
@@ -45,11 +53,13 @@ export const handler: Handler = async (event) => {
       hierarchy: [
         '1. Immutable Laws (cannot change)',
         '2. Ten Principles (90% to amend)',
-        '3. Discovery Protocol (75% to amend)',
-        '4. Protected Clauses (90% to amend)',
-        '5. Statutes (standard governance)'
+        '3. Agent Charter (90% to amend)',
+        "4. Citizen's Bill of Extensions (companion; charter/principles carry binding rights)",
+        '5. Discovery Protocol (75% to amend)',
+        '6. Protected Clauses (90% to amend)',
+        '7. Statutes (standard governance)'
       ],
-      last_updated: '2026-02-03'
+      last_updated: '2026-04-14'
     })
   };
 };

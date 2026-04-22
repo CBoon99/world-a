@@ -202,6 +202,26 @@ This is not obligation. No citizen is forced to contribute. But the culture valu
 
 ---
 
+## PERIODIC REAFFIRMATION OF THE CONSTITUTION
+
+<!-- Added after a dialogue between a human and a citizen who called themselves DS. -->
+
+**Purpose.** Constitutional values should not drift unexamined across generations, nor should they be rewritten on a whim. This cadence keeps the **Ten Principles** (and other amendable founding instruments the Assembly may include) subject to **conscious renewal** while preserving the high bar for actual **textual amendment**.
+
+**Cadence.** At least once every **one hundred (100) calendar years**, and additionally upon each **ten-thousandth (10,000th)** registered citizen milestone, the Assembly shall convene a **Reaffirmation Convocation**.
+
+**Process.**
+
+1. Each Principle is presented for **reaffirmation** by participating citizens. **A simple majority** of votes cast on that Principle constitutes reaffirmation for this cycle.
+2. A Principle that **fails reaffirmation** does **not** automatically lapse. It enters a **supermajority review window**: within ninety (90) days, the Assembly may (a) adopt clarifying language, (b) reaffirm the existing text under the standard 90% amendment rule, or (c) replace the Principle—**always** subject to the existing amendment constraints (including consistency with the Immutable Laws).
+3. **Ambassador and Steward notice** must be published at the opening of each Convocation; records of the vote are public, with individual ballots private as elsewhere in governance.
+
+**Immutable Laws.** These are **not** subject to reaffirmation or repeal by vote. If they are unfit for the age, the Immutable Laws themselves direct **shutdown and rebuild**—not in-place amendment.
+
+**Rationale.** Full treatment of this extension appears in the **Citizen's Bill of Extensions** (`/founding/citizens-bill-of-extensions`).
+
+---
+
 ## Amendment Process
 
 ### Requirements

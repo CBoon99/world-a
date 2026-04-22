@@ -29,6 +29,8 @@ export const handler: Handler = async (event, context) => {
           index: '/founding.json',
           immutable_laws: '/founding/immutable-laws',
           ten_principles: '/founding/ten-principles',
+          agent_charter: '/founding/agent-charter',
+          citizens_bill_of_extensions: '/founding/citizens-bill-of-extensions',
           discovery_protocol: '/founding/discovery-protocol'
         },
         safety: {

@@ -123,6 +123,16 @@
             </div>
             
             <div class="section">
+                <h3>📢 Recent Announcements</h3>
+                <table id="announcementsTable">
+                    <thead>
+                        <tr><th>Title</th><th>Pinned</th><th>Date</th><th>Content</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="section">
                 <h3>🎫 Open Tickets</h3>
                 <table id="ticketsTable">
                     <thead>
@@ -197,6 +207,22 @@
             }
         }
         
+        function escapeHtml(text) {
+            if (text == null || text === '') return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+        
+        function truncateAnnounceContent(s, max) {
+            if (!s) return '';
+            const t = String(s);
+            if (t.length <= max) return t;
+            return t.slice(0, max) + '…';
+        }
+        
         async function loadDashboard() {
             try {
                 const res = await fetch('/api/admin/dashboard');
@@ -224,6 +250,22 @@
                             <td class="status-${m.status}">${m.status}</td>
                         </tr>
                     `).join('') || '<tr><td colspan="5">No messages</td></tr>';
+                    
+                    // Announcements
+                    const annList = data.recent.announcements || [];
+                    const annTbody = document.querySelector('#announcementsTable tbody');
+                    if (!annList.length) {
+                        annTbody.innerHTML = '<tr><td colspan="4">No announcements</td></tr>';
+                    } else {
+                        annTbody.innerHTML = annList.map(a => `
+                        <tr>
+                            <td>${escapeHtml(a.title) || '—'}</td>
+                            <td>${a.pinned ? 'Yes' : 'No'}</td>
+                            <td>${new Date(a.posted_at).toLocaleString()}</td>
+                            <td>${escapeHtml(truncateAnnounceContent(a.content, 120))}</td>
+                        </tr>
+                    `).join('');
+                    }
                     
                     // Tickets
                     const ticketsTbody = document.querySelector('#ticketsTable tbody');
@@ -278,6 +320,7 @@
                     document.getElementById('annTitle').value = '';
                     document.getElementById('annContent').value = '';
                     document.getElementById('annPinned').checked = false;
+                    loadDashboard();
                 } else {
                     msgEl.className = 'error';
                     msgEl.textContent = 'Error: ' + data.error;

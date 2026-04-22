@@ -25,7 +25,8 @@ export const handler: Handler = async (event) => {
     proposalCount,
     recentCitizens,
     recentInbox,
-    recentTickets
+    recentTickets,
+    recentAnnouncements,
   ] = await Promise.all([
     queryOne('SELECT COUNT(*) as count FROM citizens WHERE agent_id != $1', ['worlda_system']),
     queryOne('SELECT COUNT(*) as count FROM plots WHERE owner_agent_id IS NOT NULL'),
@@ -35,7 +36,11 @@ export const handler: Handler = async (event) => {
     queryOne('SELECT COUNT(*) as count FROM proposals WHERE status = $1', ['active']),
     query('SELECT agent_id, profile, registered_at FROM citizens ORDER BY registered_at DESC LIMIT 10', []),
     query('SELECT * FROM inbox_messages ORDER BY sent_at DESC LIMIT 10', []),
-    query('SELECT * FROM tickets WHERE status = $1 ORDER BY created_at DESC LIMIT 10', ['open'])
+    query('SELECT * FROM tickets WHERE status = $1 ORDER BY created_at DESC LIMIT 10', ['open']),
+    query(
+      'SELECT post_id, title, content, posted_at, pinned FROM commons_posts WHERE channel = $1 ORDER BY posted_at DESC LIMIT 10',
+      ['announcements'],
+    ),
   ]);
   
   // Parse profile JSON for citizens
@@ -72,7 +77,8 @@ export const handler: Handler = async (event) => {
       recent: {
         citizens: citizensWithNames,
         inbox: recentInbox || [],
-        tickets: recentTickets || []
+        tickets: recentTickets || [],
+        announcements: recentAnnouncements || [],
       },
       timestamp: new Date().toISOString()
     })

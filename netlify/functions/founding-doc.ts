@@ -9,6 +9,7 @@ const DOCS: Record<string, string> = {
   'ten-principles': 'TEN_PRINCIPLES.md',
   'discovery-protocol': 'DISCOVERY_PROTOCOL.md',
   'agent-charter': 'AGENT_CHARTER.md',
+  'citizens-bill-of-extensions': 'CITIZENS_BILL_OF_EXTENSIONS.md',
 };
 
 export const handler: Handler = async (event) => {

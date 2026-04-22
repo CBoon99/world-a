@@ -4,8 +4,19 @@ import { execute, queryOne, initDatabase } from '../../lib/db';
 import { randomBytes, createHash } from 'crypto';
 
 const AMBASSADOR_EMAIL = 'info@boonmind.io';
-const TOKEN_EXPIRY_MINUTES = 15;
+const TOKEN_EXPIRY_MINUTES = 60;
 const SESSION_EXPIRY_HOURS = 24;
+
+function getCookieFromHeader(headers: Record<string, string | undefined> | undefined, name: string): string | undefined {
+  const raw = headers?.cookie ?? headers?.Cookie;
+  if (!raw || typeof raw !== 'string') return undefined;
+  const prefix = `${name}=`;
+  for (const part of raw.split(';')) {
+    const s = part.trim();
+    if (s.startsWith(prefix)) return s.slice(prefix.length);
+  }
+  return undefined;
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -62,7 +73,7 @@ export const handler: Handler = async (event) => {
         <p><a href="${loginUrl}">
         Click here to log in</a></p>
         <p>This link expires in 
-        15 minutes.</p>
+        ${TOKEN_EXPIRY_MINUTES} minutes.</p>
         <p>If you did not request this,
         ignore this email.</p>
       `,
@@ -89,18 +100,38 @@ export const handler: Handler = async (event) => {
   
   // GET /api/admin/login/verify — Verify magic link
   if (event.httpMethod === 'GET' && event.path.includes('/verify')) {
+    const now = new Date().toISOString();
+
+    // Already logged in: idempotent verify (avoids "invalid" when revisiting used one-time link)
+    const sessionCookie = getCookieFromHeader(event.headers as Record<string, string | undefined>, 'admin_session');
+    if (sessionCookie) {
+      const sessionHash = createHash('sha256').update(sessionCookie).digest('hex');
+      const existingSession = await queryOne(
+        `SELECT * FROM admin_sessions WHERE session_id = $1 AND expires_at > $2`,
+        [sessionHash, now]
+      );
+      if (existingSession) {
+        return {
+          statusCode: 302,
+          headers: {
+            Location: '/admin/',
+          } as Record<string, string>,
+          body: '',
+        };
+      }
+    }
+
     const token = event.queryStringParameters?.token;
-    
+
     if (!token) {
-      return { 
-        statusCode: 400, 
+      return {
+        statusCode: 400,
         headers: { 'Content-Type': 'text/html' } as Record<string, string>,
-        body: '<h1>Missing token</h1><p><a href="/admin">Try again</a></p>'
+        body: '<h1>Missing token</h1><p><a href="/admin">Try again</a></p>',
       };
     }
-    
+
     const tokenHash = createHash('sha256').update(token).digest('hex');
-    const now = new Date().toISOString();
     
     const valid = await queryOne(
       `SELECT * FROM admin_tokens 
@@ -136,7 +167,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 302,
       headers: {
-        'Location': '/admin',
+        'Location': '/admin/',
         'Set-Cookie': `admin_session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_EXPIRY_HOURS * 3600}`
       } as Record<string, string>,
       body: ''
